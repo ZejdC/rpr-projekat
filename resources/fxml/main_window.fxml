@@ -9,11 +9,11 @@
          <content>
             <VBox fx:id="vbox" maxHeight="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity">
                <children>
-                  <Button fx:id="addBtn" mnemonicParsing="false" onAction="#addSubject" prefHeight="60.0" prefWidth="200.0" text="Dodaj predmet" />
+                  <Button fx:id="addBtn" mnemonicParsing="false" onAction="#addSubject" prefHeight="60.0" prefWidth="200.0" styleClass="addbutton" stylesheets="@../css/subjectbutton.css" text="Dodaj predmet" />
                </children>
             </VBox>
          </content>
       </ScrollPane>
-      <Pane prefHeight="200.0" prefWidth="200.0" AnchorPane.leftAnchor="200.0" />
+      <ListView prefHeight="200.0" prefWidth="200.0" AnchorPane.leftAnchor="200.0" />
    </children>
 </AnchorPane>

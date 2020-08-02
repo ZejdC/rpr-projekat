@@ -1,3 +1,39 @@
-.subjectbutton{
-
+.subjectbutton {
+    /*-fx-background:linear-gradient(to bottom, #8e44ad 5%, #378de5 100%);*/
+    -fx-background-color:#8e44ad;
+    -fx-font-family: Roboto;
+    -fx-font-size: 140%;
+    -fx-text-fill: white;
+    -fx-font-style: oblique;
 }
+.subjectbutton:hover {
+    -fx-background:linear-gradient(to bottom, #9b59b6 5%, #79bbff 100%);
+    -fx-background-color:#9b59b6;
+}
+.optionsbutton{
+    -fx-background-color: #b07cc6;
+    -fx-font-family: Roboto;
+    -fx-font-size: 140%;
+    -fx-text-fill: white;
+    -fx-font-style: oblique;
+}
+.optionsbutton:hover{
+    -fx-background-color: #d0b1dd;
+}
+.addbutton{
+    /*-fx-background: linear-gradient(to bottom, tomato 10%, orangered 100%);*/
+    -fx-background-color: #2c3e50;
+    -fx-font-family: Roboto;
+    -fx-font-size: 140%;
+    -fx-text-fill: white;
+    -fx-font-style: oblique;
+    -fx-background-radius: 0%;
+    -fx-border-radius: 0%;
+}
+.addbutton:hover{
+    -fx-background: linear-gradient(to bottom, orangered 10%, tomato 100%);
+    -fx-background-color: #34495e;
+}
+
+
+

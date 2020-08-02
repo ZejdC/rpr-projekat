@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+
+<AnchorPane prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/10.0.2-internal" xmlns:fx="http://javafx.com/fxml/1">
+   <children>
+      <TextField fx:id="subject" layoutX="51.0" layoutY="155.0" prefHeight="90.0" prefWidth="485.0" AnchorPane.leftAnchor="50.0" />
+      <Label layoutX="51.0" layoutY="54.0" text="What is the name of the subject you want to add?" AnchorPane.leftAnchor="50.0">
+         <font>
+            <Font size="21.0" />
+         </font>
+      </Label>
+      <ButtonBar layoutX="14.0" layoutY="346.0" prefHeight="40.0" prefWidth="536.0" AnchorPane.rightAnchor="50.0">
+        <buttons>
+          <Button fx:id="cancelBtn" mnemonicParsing="false" onAction="#cancel" prefHeight="100.0" text="Cancel" />
+            <Button fx:id="okBtn" mnemonicParsing="false" onAction="#confirm" prefHeight="100.0" text="Ok" />
+        </buttons>
+      </ButtonBar>
+   </children>
+</AnchorPane>
