@@ -12,10 +12,12 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
+import rpr.projekat.zejd.Models.DirectoryModel;
 
 import java.io.IOException;
 
 public class MainController {
+    DirectoryModel model;
     @FXML
     private Button addBtn;
     @FXML
@@ -25,6 +27,8 @@ public class MainController {
     @FXML
     public void initialize(){
         scrlPn.getStylesheets().add(getClass().getResource("/css/subjectbutton.css").toExternalForm());
+        model = new DirectoryModel();
+
     }
     int brojac = 1;
     boolean test = false;
@@ -61,12 +65,17 @@ public class MainController {
                     public void run() {
                         String name = nc.getName();
                         if(name==null)return;
+                        model.addSubject(name);
                         Button b = new Button(name);
                         b.getStyleClass().add("subjectbutton");
                         b.setOnAction((eh)->{
                             if(!test){
                                 lastClicked = (Button) eh.getSource();
                                 int number = vbox.getChildren().indexOf(lastClicked);
+                                Button addFile = createOptionButton("Dodaj fajl");
+                                addFile.setOnAction((handler) -> {
+
+                                });
                                 vbox.getChildren().add(number+1, createOptionButton("Dodaj fajl"));
                                 vbox.getChildren().add(number+2, createOptionButton("Dodaj internet fajl"));
                                 vbox.getChildren().add(number+3, createOptionButton("Obriši predmet"));
