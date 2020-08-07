@@ -7,18 +7,21 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 import rpr.projekat.zejd.Controllers.MainController;
 
+import java.nio.file.Files;
+import java.nio.file.Paths;
+
 public class Main extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception{
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/main_window.fxml"));
+        Files.createDirectories(Paths.get(System.getProperty("user.home")+"/"+"SubjectManagementSystem"));
         loader.setController(new MainController());
         Parent root = loader.load();
-        //Parent root = FXMLLoader.load(getClass().getResource("main_window.fxml"));
         primaryStage.setMinWidth(500);
         primaryStage.setMinHeight(250);
 
-        primaryStage.setTitle("Help me pls");
+        primaryStage.setTitle("Subject Management System");
         primaryStage.setScene(new Scene(root, 750, 500));
         primaryStage.show();
     }
