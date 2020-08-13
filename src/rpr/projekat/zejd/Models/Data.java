@@ -1,12 +1,16 @@
 package rpr.projekat.zejd.Models;
 
+import java.sql.Blob;
+
 public class Data extends Location{
     private Integer id, parent;
+    private Blob content;
 
-    public Data(String adress, Integer id, Integer parent) {
-        super(adress);
+    public Data(String name, Integer id, Integer parent, Blob b) {
+        super(name);
         this.id = id;
         this.parent = parent;
+        content = b;
     }
 
     public Integer getId() {

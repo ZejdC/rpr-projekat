@@ -3,8 +3,8 @@ package rpr.projekat.zejd.Models;
 public class Directory extends Location{
     private Integer id, parent, subject;
 
-    public Directory(Integer id, Integer parent, Integer subject, String adress) {
-        super(adress);
+    public Directory(Integer id, Integer parent, Integer subject, String name) {
+        super(name);
         this.id = id;
         this.parent = parent;
         this.subject = subject;

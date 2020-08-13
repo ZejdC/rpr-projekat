@@ -8,7 +8,9 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
@@ -20,8 +22,10 @@ import rpr.projekat.zejd.Utility.OptionButtons;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.util.Deque;
+import java.util.LinkedList;
+import java.util.Optional;
+import java.util.Stack;
 
 import static rpr.projekat.zejd.Utility.OptionButtons.*;
 
@@ -38,10 +42,13 @@ public class MainController {
         updateSubjectsFromDatabase();
 
     }
-    private String currentpath = System.getProperty("user.home")+"/"+"SubjectManagementSystem";
+    private String currentparentdirectory = null;
     int brojac = 1;
     boolean test = false;
     Button lastClicked = null;
+
+    private Deque<String> pathQueue = new LinkedList<>();
+    private Stack<String> pathStack = new Stack<>();
 
     private void refreshSubjects(){
         int size = vbox.getChildren().size();
@@ -60,10 +67,15 @@ public class MainController {
         }
     }
 
+    String currentSubject = "";
+    String currentDirectory = "";
+
     private Button createSubjectButton(String text){
         Button b = new Button(text);
         b.getStyleClass().add("subjectbutton");
         b.setOnAction((eh)->{
+            currentSubject = b.getText();
+            currentDirectory = b.getText();
             if(!test){
                 lastClicked = (Button) eh.getSource();
                 int number = vbox.getChildren().indexOf(lastClicked);
@@ -112,7 +124,28 @@ public class MainController {
                 button.setOnAction((handler)->{
                     FileChooser fileChooser = new FileChooser();
                     File file = fileChooser.showOpenDialog(new Stage());
+                    model.addFile(pathQueue,file.getName(),file);
                 });
+                break;
+            case ADDDIRECTORY:
+                button.setOnAction((handler)->{
+
+                });
+                break;
+            case DELETESUBJECT:
+                Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+                alert.setTitle("Confirm deletion");
+                alert.setHeaderText("Are you sure you want to delete this subject including all files belonging to the subject?");
+                Optional<ButtonType> option = alert.showAndWait();
+                if(option.get()==null){
+                    break;
+                }
+                else if(option.get()==ButtonType.OK){
+                    model.deleteSubject(pathQueue);
+                }
+                else if(option.get()==ButtonType.CANCEL){
+                    break;
+                }
         }
         return button;
     }
