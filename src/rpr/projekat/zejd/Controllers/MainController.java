@@ -10,6 +10,10 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
@@ -19,6 +23,8 @@ import rpr.projekat.zejd.Utility.DataType;
 import rpr.projekat.zejd.Utility.ListViewCellElement;
 import rpr.projekat.zejd.Utility.OptionButtons;
 
+import javax.swing.*;
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -38,6 +44,26 @@ public class MainController {
         scrlPn.getStylesheets().add(getClass().getResource("/css/subjectbutton.css").toExternalForm());
         model = new DirectoryModel();
         updateSubjectsFromDatabase();
+        list.setOnMouseClicked(new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent mouseEvent) {
+                if(mouseEvent.getClickCount()==2 && mouseEvent.getButton()== MouseButton.PRIMARY){
+                    ListViewCellElement lvce = list.getSelectionModel().getSelectedItem();
+                    switch (lvce.getType()){
+                        case FILE:
+                            File file = model.getClickedFile(pathQueue,lvce.getName());
+                            try {
+                                Desktop.getDesktop().open(file);
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                            break;
+                        case DIRECTORY:
+                            break;
+                    }
+                }
+            }
+        });
     }
     int brojac = 1;
     boolean test = false;

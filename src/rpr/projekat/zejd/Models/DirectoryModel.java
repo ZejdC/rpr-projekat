@@ -14,7 +14,7 @@ public class DirectoryModel {
     private Connection con = null;
 
     private PreparedStatement dodajPredmet, dajSvePredmete, dodajDirektorij, dajPredmetPoImenu, dodajFajl, dajIDDirektorijaPoImenu;
-    private PreparedStatement dajKorijenskiDirektorijPredmeta, dajDirektorij,dajDirektorijeUDirektoriju, dajFajloveUDirektoriju;
+    private PreparedStatement dajKorijenskiDirektorijPredmeta, dajDirektorij,dajDirektorijeUDirektoriju, dajFajloveUDirektoriju, dajFajlUDirektoriju;
 
     private PreparedStatement obrisiPredmet, obrisiFajlovePredmeta, obrisiDatotekePredmeta;
 
@@ -47,6 +47,7 @@ public class DirectoryModel {
             obrisiDatotekePredmeta = con.prepareStatement("DELETE FROM directory WHERE subjectid=?");
             dajDirektorijeUDirektoriju = con.prepareStatement("SELECT * FROM directory WHERE parentid=?");
             dajFajloveUDirektoriju = con.prepareStatement("SELECT * FROM file WHERE parentid=?");
+            dajFajlUDirektoriju = con.prepareStatement("SELECT * FROM file WHERE parentid=? AND name=?");
         } catch (SQLException throwables) {
             throwables.printStackTrace();
         }
@@ -58,6 +59,7 @@ public class DirectoryModel {
             while (rs.next()){
                 directories.add(new Directory(rs.getInt(1),rs.getInt(3),rs.getInt(4),rs.getString(2)));
             }
+            rs.close();
         } catch (SQLException throwables) {
             throwables.printStackTrace();
         }
@@ -70,6 +72,7 @@ public class DirectoryModel {
             while(rs.next()){
                 data.add(new Data(rs.getString(2),rs.getInt(1),rs.getInt(3),rs.getInt(4),rs.getBytes(5)));
             }
+            rs.close();
         } catch (SQLException throwables) {
             throwables.printStackTrace();
         }
@@ -82,6 +85,7 @@ public class DirectoryModel {
             while(rs.next()){
                 subjects.add(new Subject(rs.getInt(1),rs.getString(2)));
             }
+            rs.close();
         } catch (SQLException throwables) {
             throwables.printStackTrace();
         }
@@ -260,5 +264,26 @@ public class DirectoryModel {
             throwables.printStackTrace();
         }
         return list;
+    }
+
+    public File getClickedFile(Deque<String> path, String name) {
+        Deque<String> deepCopy = new LinkedList<>(path);
+        Directory parent = getParentDirectory(deepCopy);
+        File tempFile = null;
+        try {
+            dajFajlUDirektoriju.setInt(1,parent.getId());
+            dajFajlUDirektoriju.setString(2,name);
+            Data data = getDataFromResultSet(dajFajlUDirektoriju.executeQuery()).get(0);
+            tempFile = File.createTempFile(name,"."+(name.split("\\."))[1]);
+            tempFile.setWritable(true);
+            FileOutputStream fos = new FileOutputStream(tempFile);
+            fos.write(data.getContent());
+            fos.close();
+            tempFile.deleteOnExit();
+            dajFajlUDirektoriju.clearParameters();
+        } catch (IOException | SQLException e) {
+            e.printStackTrace();
+        }
+        return tempFile;
     }
 }
