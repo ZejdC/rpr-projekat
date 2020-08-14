@@ -96,8 +96,7 @@ public class DirectoryModel {
         try {
             dajDirektorij.setInt(1,parent);
             dajDirektorij.setString(2,name);
-            getDirectoriesFromResultSet(dajDirektorij.executeQuery()).get(0);
-
+            return getDirectoriesFromResultSet(dajDirektorij.executeQuery()).get(0);
         } catch (SQLException throwables) {
             throwables.printStackTrace();
         }

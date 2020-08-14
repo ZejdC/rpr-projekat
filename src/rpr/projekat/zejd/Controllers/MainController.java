@@ -59,6 +59,15 @@ public class MainController {
                             }
                             break;
                         case DIRECTORY:
+                            if(lvce.getName().equals(". . .") && pathQueue.size()>1){
+                                pathQueue.removeLast();
+                                pathStack.pop();
+                            }
+                            else if(!lvce.getName().equals(". . .")){
+                                pathQueue.add(lvce.getName());
+                                pathStack.add(lvce.getName());
+                            }
+                            updateListView();
                             break;
                     }
                 }
@@ -77,7 +86,8 @@ public class MainController {
 
     private void updateListView(){
         ObservableList<ListViewCellElement> observableList = FXCollections.observableArrayList();
-        observableList.add(0,new ListViewCellElement("Parent", DataType.DIRECTORY));
+        //ADD A DIRECTORY FROM WHICH YOU CAN ACCESS THE PARENT DIRECTORY
+        observableList.add(0,new ListViewCellElement(". . .", DataType.DIRECTORY));
         for(Directory d: model.getDirectoriesInCurrentFolder(pathQueue)){
             observableList.add(new ListViewCellElement(d.getName(),DataType.DIRECTORY));
         }
