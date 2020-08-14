@@ -1,4 +1,4 @@
-# Application For Managing of Teaching/Learning Materials
+# Application For Management Of Teaching/Learning Materials
 An application made in Java using JavaFX
 
 
