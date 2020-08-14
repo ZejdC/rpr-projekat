@@ -7,6 +7,7 @@ import java.io.*;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Deque;
+import java.util.LinkedList;
 import java.util.Queue;
 
 import static java.sql.Types.INTEGER;
@@ -17,6 +18,8 @@ public class DirectoryModel {
     private PreparedStatement dodajPredmet, dajSvePredmete, dodajDirektorij, dajPredmetPoImenu, dodajFajl, dajIDDirektorijaPoImenu;
     private PreparedStatement dajKorijenskiDirektorijPredmeta, dajDirektorij;
 
+    private PreparedStatement obrisiPredmet, obrisiFajlovePredmeta, obrisiDatotekePredmeta;
+
     public DirectoryModel(){
         try {
             con = DriverManager.getConnection("jdbc:sqlite:files.db");
@@ -26,7 +29,7 @@ public class DirectoryModel {
                 Statement pom = con.createStatement();
                 pom.execute("CREATE TABLE subject(id integer primary key autoincrement, name varchar(50) unique)");
                 pom.execute("CREATE TABLE directory(id integer primary key autoincrement, name varchar(50), parentid integer nullable references directory(id), subjectid integer nullable references subject(id))");
-                pom.execute("CREATE TABLE file(id integer primary key autoincrement, name varchar(50), parentid integer references directory(id), content blob)");
+                pom.execute("CREATE TABLE file(id integer primary key autoincrement, name varchar(50), parentid integer references directory(id), subjectid integer references subject(id), content blob)");
             } catch (SQLException ex) {
                 ex.printStackTrace();
             }
@@ -36,11 +39,14 @@ public class DirectoryModel {
             dajSvePredmete = con.prepareStatement("SELECT * FROM subject");
             dodajDirektorij = con.prepareStatement("INSERT INTO directory(name,parentid,subjectid)VALUES(?,?,?)");
             dajPredmetPoImenu = con.prepareStatement("SELECT * FROM subject WHERE name=?");
-            dodajFajl = con.prepareStatement("INSERT INTO file(name,parentid,content)VALUES(?,?,?)");
+            dodajFajl = con.prepareStatement("INSERT INTO file(name,parentid,subjectid,content)VALUES(?,?,?,?)");
             dajIDDirektorijaPoImenu = con.prepareStatement("SELECT * FROM directory WHERE name=?");
             dajKorijenskiDirektorijPredmeta = con.prepareStatement("SELECT d.id, d.name, d.parentid, d.subjectid" +
-                                                                       "FROM directory d, subject s WHERE d.subjectid=s.id AND s.name = ?");
+                                                                       " FROM directory d, subject s WHERE d.subjectid=s.id AND s.name = ?");
             dajDirektorij = con.prepareStatement("SELECT * FROM directory WHERE parentid=? AND name=?");
+            obrisiPredmet = con.prepareStatement("DELETE FROM subject WHERE id=?");
+            obrisiFajlovePredmeta = con.prepareStatement("DELETE FROM file WHERE subjectid=?");
+            obrisiDatotekePredmeta = con.prepareStatement("DELETE FROM directory WHERE subjectid=?");
         } catch (SQLException throwables) {
             throwables.printStackTrace();
         }
@@ -56,6 +62,18 @@ public class DirectoryModel {
             throwables.printStackTrace();
         }
         return directories;
+    }
+    // RESULTSET -> ID, NAME
+    private ArrayList<Subject> getSubjectsFromResultSet(ResultSet rs){
+        ArrayList<Subject> subjects = new ArrayList<>();
+        try {
+            while(rs.next()){
+                subjects.add(new Subject(rs.getInt(1),rs.getString(2)));
+            }
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        }
+        return subjects;
     }
 
     private Directory getDirectory(Integer parent, String name){
@@ -87,6 +105,18 @@ public class DirectoryModel {
         return null;
     }
 
+    private Subject getSubject(String name){
+        try {
+            dajPredmetPoImenu.setString(1,name);
+            ResultSet resultSet = dajPredmetPoImenu.executeQuery();
+            return getSubjectsFromResultSet(resultSet).get(0);
+
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        }
+        return null;
+    }
+
     private byte[] readFile(File f){
         ByteArrayOutputStream bos = null;
         try {
@@ -103,50 +133,33 @@ public class DirectoryModel {
         }
         return bos != null ? bos.toByteArray() : null;
     }
-
-    public Subject getSubjectByName(String name){
-        try {
-            dajPredmetPoImenu.setString(1,name);
-            ResultSet rs = dajPredmetPoImenu.executeQuery();
-            if(!rs.next())return null;
-            Subject subject = new Subject(rs.getInt(1),rs.getString(2));
-            rs.close();
-            return subject;
-        } catch (SQLException throwables) {
-            throwables.printStackTrace();
-        }
-        return null;
-    }
     //ADDS A NEW SUBJECT AND CREATES THE ROOT DIRECTORY
     public void addSubject(String name){
         try {
             dodajPredmet.setString(1,name);
             dodajPredmet.execute();
             dodajPredmet.clearParameters();
-            Subject s = getSubjectByName(name);
+            Subject s = getSubject(name);
             if(s==null) System.out.println("ERROR");
-            addDirectory(s.getId(),null,s.getName());
+            addDirectory(null,s.getId(),s.getName());
         } catch (SQLException throwables) {
             throwables.printStackTrace();
         }
     }
 
-    public ObservableList<Subject> getAllSubjects(){
-        ObservableList<Subject> returnVal = FXCollections.observableArrayList();
+    public ArrayList<Subject> getAllSubjects(){
         try {
             ResultSet resultSet = dajSvePredmete.executeQuery();
-            while (resultSet.next()){
-                returnVal.add(new Subject(resultSet.getInt(1),resultSet.getString(2)));
-            }
-            resultSet.close();
+            return getSubjectsFromResultSet(resultSet);
         } catch (SQLException throwables) {
             throwables.printStackTrace();
         }
-        return returnVal;
+        return new ArrayList<>();
     }
 
     public void addDirectory(Deque<String> path, String name){
-        Directory d = getDirectory(path);
+        Deque<String> deepCopy = new LinkedList<>(path);
+        Directory d = getDirectory(deepCopy);
         try {
             dodajDirektorij.setString(1,name);
             dodajDirektorij.setInt(2,d.getId());
@@ -158,16 +171,18 @@ public class DirectoryModel {
         }
     }
 
-    public void addFile(Deque<String> parent, String name, File f){
-        Integer parentid = getDirectory(parent).getId();
-        if(parentid==-1){
+    public void addFile(Deque<String> path, String name, File f){
+        Deque<String> deepCopy = new LinkedList<>(path);
+        Directory directory = getDirectory(deepCopy);
+        if(directory.getId()==-1){
             System.out.println("ERROR");
             return;
         }
         try {
             dodajFajl.setString(1,name);
-            dodajFajl.setInt(2,parentid);
-            dodajFajl.setBytes(3,readFile(f));
+            dodajFajl.setInt(2,directory.getId());
+            dodajFajl.setInt(3,directory.getSubject());
+            dodajFajl.setBytes(4,readFile(f));
             dodajFajl.execute();
         } catch (SQLException throwables) {
             throwables.printStackTrace();
@@ -175,19 +190,37 @@ public class DirectoryModel {
     }
     private void addDirectory(Integer parent, Integer subject, String name) {
         try {
-            dodajFajl.setString(1,name);
-            dodajFajl.setInt(2,parent);
-            if(subject==null)
-                dodajFajl.setNull(3,INTEGER);
+            dodajDirektorij.setString(1,name);
+            if(parent == null)
+                dodajDirektorij.setNull(2,INTEGER);
             else
-                dodajFajl.setInt(3,subject);
-            dodajFajl.execute();
+                dodajDirektorij.setInt(2,parent);
+            if(subject==null)
+                dodajDirektorij.setNull(3,INTEGER);
+            else
+                dodajDirektorij.setInt(3,subject);
+            dodajDirektorij.execute();
         } catch (SQLException throwables) {
             throwables.printStackTrace();
         }
     }
 
     public void deleteSubject(Deque<String> path) {
+        Deque<String> deepCopy = new LinkedList<>(path);
+        Subject subject = getSubject(deepCopy.pop());
+        if(subject==null){
+            System.out.println("ERROR");
+        }
+        try {
+            obrisiPredmet.setInt(1,subject.getId());
+            obrisiDatotekePredmeta.setInt(1, subject.getId());
+            obrisiFajlovePredmeta.setInt(1,subject.getId());
 
+            obrisiFajlovePredmeta.execute();
+            obrisiDatotekePredmeta.execute();
+            obrisiPredmet.execute();
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        }
     }
 }
