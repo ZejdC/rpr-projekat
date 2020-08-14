@@ -1,6 +1,8 @@
 package rpr.projekat.zejd.Controllers;
 
 import javafx.application.Platform;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
@@ -12,9 +14,9 @@ import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
-import rpr.projekat.zejd.Models.DirectoryModel;
-import rpr.projekat.zejd.Models.Location;
-import rpr.projekat.zejd.Models.Subject;
+import rpr.projekat.zejd.Models.*;
+import rpr.projekat.zejd.Utility.DataType;
+import rpr.projekat.zejd.Utility.ListViewCellElement;
 import rpr.projekat.zejd.Utility.OptionButtons;
 
 import java.io.File;
@@ -30,13 +32,12 @@ public class MainController {
     @FXML
     private VBox vbox;
     @FXML
-    private ListView<Location> list;
+    private ListView<ListViewCellElement> list;
     @FXML
     public void initialize(){
         scrlPn.getStylesheets().add(getClass().getResource("/css/subjectbutton.css").toExternalForm());
         model = new DirectoryModel();
         updateSubjectsFromDatabase();
-        updateListView();
     }
     int brojac = 1;
     boolean test = false;
@@ -49,7 +50,15 @@ public class MainController {
     private Stack<String> pathStack = new Stack<>();
 
     private void updateListView(){
-
+        ObservableList<ListViewCellElement> observableList = FXCollections.observableArrayList();
+        observableList.add(0,new ListViewCellElement("Parent", DataType.DIRECTORY));
+        for(Directory d: model.getDirectoriesInCurrentFolder(pathQueue)){
+            observableList.add(new ListViewCellElement(d.getName(),DataType.DIRECTORY));
+        }
+        for(Data d: model.getFilesInCurrentFolder(pathQueue)){
+            observableList.add(new ListViewCellElement(d.getName(),DataType.FILE));
+        }
+        list.setItems(observableList);
     }
 
     private void refreshSubjects(){
@@ -70,9 +79,6 @@ public class MainController {
         }
     }
 
-    String currentSubject = "";
-    String currentDirectory = "";
-
     private Button createSubjectButton(String text){
         Button b = new Button(text);
         b.getStyleClass().add("subjectbutton");
@@ -87,6 +93,7 @@ public class MainController {
                 vbox.getChildren().add(number+2, createOptionButton("Dodaj direktorij", ADDDIRECTORY));
                 vbox.getChildren().add(number+3, createOptionButton("Dodaj internet fajl", ADDINTERNETFILE));
                 vbox.getChildren().add(number+4, createOptionButton("Obriši predmet", DELETESUBJECT));
+                updateListView();
                 test = true;
             }
             // IF THE SUBJECT THAT IS SELECTED GETS CLICKED
@@ -99,6 +106,7 @@ public class MainController {
                 vbox.getChildren().remove(number+1);
                 vbox.getChildren().remove(number+1);
                 vbox.getChildren().remove(number+1);
+                list.getItems().clear();
                 test = false;
             }
             // IF A SUBJECT IS SELECTED AND ANOTHER SUBJECT GETS CLICKED
@@ -119,6 +127,7 @@ public class MainController {
                 pathQueue.clear();
                 pathQueue.add(b.getText());
                 pathStack.add(b.getText());
+                updateListView();
             }
         });
         b.setPrefWidth(200);
@@ -137,9 +146,9 @@ public class MainController {
                 button.setOnAction((handler)->{
                     FileChooser fileChooser = new FileChooser();
                     File file = fileChooser.showOpenDialog(new Stage());
-
                     if(file!=null)
                         model.addFile(pathQueue,file.getName(),file);
+                    updateListView();
                 });
                 break;
             case ADDDIRECTORY:
@@ -167,7 +176,7 @@ public class MainController {
                                     String name = ad.getName();
                                     if(name==null)return;
                                     model.addDirectory(pathQueue,name);
-                                    refreshSubjects();
+                                    updateListView();
                                 }
                             });
                         }

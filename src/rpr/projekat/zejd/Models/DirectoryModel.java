@@ -1,14 +1,12 @@
 package rpr.projekat.zejd.Models;
 
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
+import rpr.projekat.zejd.Utility.ListViewCellElement;
 
 import java.io.*;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.LinkedList;
-import java.util.Queue;
 
 import static java.sql.Types.INTEGER;
 
@@ -16,7 +14,7 @@ public class DirectoryModel {
     private Connection con = null;
 
     private PreparedStatement dodajPredmet, dajSvePredmete, dodajDirektorij, dajPredmetPoImenu, dodajFajl, dajIDDirektorijaPoImenu;
-    private PreparedStatement dajKorijenskiDirektorijPredmeta, dajDirektorij;
+    private PreparedStatement dajKorijenskiDirektorijPredmeta, dajDirektorij,dajDirektorijeUDirektoriju, dajFajloveUDirektoriju;
 
     private PreparedStatement obrisiPredmet, obrisiFajlovePredmeta, obrisiDatotekePredmeta;
 
@@ -47,6 +45,8 @@ public class DirectoryModel {
             obrisiPredmet = con.prepareStatement("DELETE FROM subject WHERE id=?");
             obrisiFajlovePredmeta = con.prepareStatement("DELETE FROM file WHERE subjectid=?");
             obrisiDatotekePredmeta = con.prepareStatement("DELETE FROM directory WHERE subjectid=?");
+            dajDirektorijeUDirektoriju = con.prepareStatement("SELECT * FROM directory WHERE parentid=?");
+            dajFajloveUDirektoriju = con.prepareStatement("SELECT * FROM file WHERE parentid=?");
         } catch (SQLException throwables) {
             throwables.printStackTrace();
         }
@@ -62,6 +62,18 @@ public class DirectoryModel {
             throwables.printStackTrace();
         }
         return directories;
+    }
+    // RESULTSET -> ID, NAME, PARENT, SUBJECT, CONTENT
+    private ArrayList<Data> getDataFromResultSet(ResultSet rs){
+        ArrayList<Data> data = new ArrayList<>();
+        try {
+            while(rs.next()){
+                data.add(new Data(rs.getString(2),rs.getInt(1),rs.getInt(3),rs.getInt(4),rs.getBytes(5)));
+            }
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        }
+        return data;
     }
     // RESULTSET -> ID, NAME
     private ArrayList<Subject> getSubjectsFromResultSet(ResultSet rs){
@@ -88,7 +100,7 @@ public class DirectoryModel {
         return null;
     }
 
-    private Directory getDirectory(Deque<String> path){
+    private Directory getParentDirectory(Deque<String> path){
         try {
             String subject = path.pop();
             dajKorijenskiDirektorijPredmeta.setString(1,subject);
@@ -159,7 +171,7 @@ public class DirectoryModel {
 
     public void addDirectory(Deque<String> path, String name){
         Deque<String> deepCopy = new LinkedList<>(path);
-        Directory d = getDirectory(deepCopy);
+        Directory d = getParentDirectory(deepCopy);
         try {
             dodajDirektorij.setString(1,name);
             dodajDirektorij.setInt(2,d.getId());
@@ -173,7 +185,7 @@ public class DirectoryModel {
 
     public void addFile(Deque<String> path, String name, File f){
         Deque<String> deepCopy = new LinkedList<>(path);
-        Directory directory = getDirectory(deepCopy);
+        Directory directory = getParentDirectory(deepCopy);
         if(directory.getId()==-1){
             System.out.println("ERROR");
             return;
@@ -222,5 +234,31 @@ public class DirectoryModel {
         } catch (SQLException throwables) {
             throwables.printStackTrace();
         }
+    }
+
+    public ArrayList<Directory> getDirectoriesInCurrentFolder(Deque<String> path) {
+        Deque<String> deepCopy = new LinkedList<>(path);
+        ArrayList<Directory> list = new ArrayList<>();
+        Directory parent = getParentDirectory(deepCopy);
+        try {
+            dajDirektorijeUDirektoriju.setInt(1,parent.getId());
+            list = getDirectoriesFromResultSet(dajDirektorijeUDirektoriju.executeQuery());
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        }
+        return list;
+    }
+
+    public ArrayList<Data> getFilesInCurrentFolder(Deque<String> path) {
+        Deque<String> deepCopy = new LinkedList<>(path);
+        ArrayList<Data> list = new ArrayList<>();
+        Directory parent = getParentDirectory(deepCopy);
+        try {
+            dajFajloveUDirektoriju.setInt(1,parent.getId());
+            list = getDataFromResultSet(dajFajloveUDirektoriju.executeQuery());
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        }
+        return list;
     }
 }

@@ -4,9 +4,9 @@ import java.sql.Blob;
 
 public class Data extends Location{
     private Integer id, parent, subject;
-    private Blob content;
+    private byte[] content;
 
-    public Data(String name, Integer id, Integer parent, Integer subject, Blob b) {
+    public Data(String name, Integer id, Integer parent, Integer subject, byte[] b) {
         super(name);
         this.id = id;
         this.parent = parent;
@@ -38,11 +38,11 @@ public class Data extends Location{
         this.subject = subject;
     }
 
-    public Blob getContent() {
+    public byte[] getContent() {
         return content;
     }
 
-    public void setContent(Blob content) {
+    public void setContent(byte[] content) {
         this.content = content;
     }
 }
