@@ -1,5 +1,7 @@
 package rpr.projekat.zejd.Models;
 
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
 import rpr.projekat.zejd.Utility.ListViewCellElement;
 
 import java.io.*;
@@ -7,6 +9,7 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.LinkedList;
+import java.util.Optional;
 
 import static java.sql.Types.INTEGER;
 
@@ -17,6 +20,8 @@ public class DirectoryModel {
     private PreparedStatement dajKorijenskiDirektorijPredmeta, dajDirektorij,dajDirektorijeUDirektoriju, dajFajloveUDirektoriju, dajFajlUDirektoriju;
 
     private PreparedStatement obrisiPredmet, obrisiFajlovePredmeta, obrisiDatotekePredmeta;
+
+    private PreparedStatement updateFile;
 
     public DirectoryModel(){
         try {
@@ -48,6 +53,8 @@ public class DirectoryModel {
             dajDirektorijeUDirektoriju = con.prepareStatement("SELECT * FROM directory WHERE parentid=?");
             dajFajloveUDirektoriju = con.prepareStatement("SELECT * FROM file WHERE parentid=?");
             dajFajlUDirektoriju = con.prepareStatement("SELECT * FROM file WHERE parentid=? AND name=?");
+
+            updateFile = con.prepareStatement("UPDATE file SET content=? WHERE parentid=? AND name=?");
         } catch (SQLException throwables) {
             throwables.printStackTrace();
         }
@@ -189,8 +196,38 @@ public class DirectoryModel {
     public void addFile(Deque<String> path, String name, File f){
         Deque<String> deepCopy = new LinkedList<>(path);
         Directory directory = getParentDirectory(deepCopy);
-        if(directory.getId()==-1){
+        deepCopy = new LinkedList<>(path);
+        for(Data d:getFilesInCurrentFolder(deepCopy)){
+            if(d.getName().equals(name)){
+                Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+                alert.setTitle("Overwrite file?");
+                alert.setHeaderText("Are you sure that you want to overwrite this file?");
+                Optional<ButtonType> option = alert.showAndWait();
+                if(option.get()==null){
+                    return;
+                }
+                else if(option.get()==ButtonType.OK){
+                    try {
+                        updateFile.setBytes(1,readFile(f));
+                        updateFile.setInt(2,directory.getId());
+                        updateFile.setString(3,d.getName());
+                        updateFile.execute();
+                        return;
+                    } catch (SQLException throwables) {
+                        throwables.printStackTrace();
+                    }
+                }
+                else if(option.get()==ButtonType.CANCEL){
+                    return;
+                }
+                return;
+            }
+        }
+        if(directory==null){
             System.out.println("ERROR");
+            return;
+        }
+        if(name.split("\\.").length<2){
             return;
         }
         try {

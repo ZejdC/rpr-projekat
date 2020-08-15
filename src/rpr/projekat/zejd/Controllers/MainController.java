@@ -12,14 +12,15 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.Button;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.input.MouseButton;
-import javafx.scene.input.MouseEvent;
+import javafx.scene.input.*;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
+import javafx.util.Callback;
 import rpr.projekat.zejd.Models.*;
 import rpr.projekat.zejd.Utility.DataType;
+import rpr.projekat.zejd.Utility.ListViewCell;
 import rpr.projekat.zejd.Utility.ListViewCellElement;
 import rpr.projekat.zejd.Utility.OptionButtons;
 
@@ -61,16 +62,42 @@ public class MainController {
                         case DIRECTORY:
                             if(lvce.getName().equals(". . .") && pathQueue.size()>1){
                                 pathQueue.removeLast();
-                                pathStack.pop();
                             }
                             else if(!lvce.getName().equals(". . .")){
                                 pathQueue.add(lvce.getName());
-                                pathStack.add(lvce.getName());
                             }
                             updateListView();
                             break;
                     }
                 }
+            }
+        });
+        list.setOnDragOver(new EventHandler<DragEvent>() {
+            @Override
+            public void handle(DragEvent event) {
+                Dragboard db = event.getDragboard();
+                if (db.hasFiles()) {
+                    event.acceptTransferModes(TransferMode.COPY);
+                } else {
+                    event.consume();
+                }
+            }
+        });
+        list.setOnDragDropped(new EventHandler<DragEvent>() {
+            @Override
+            public void handle(DragEvent dragEvent) {
+                Dragboard db = dragEvent.getDragboard();
+                File file = db.getFiles().get(0);
+                if(file!=null)
+                    model.addFile(pathQueue,file.getName(),file);
+                updateListView();
+            }
+        });
+        list.setFixedCellSize(32);
+        list.setCellFactory(new Callback<ListView<ListViewCellElement>, ListCell<ListViewCellElement>>() {
+            @Override
+            public ListCell<ListViewCellElement> call(ListView<ListViewCellElement> listViewCellElementListView) {
+                return new ListViewCell();
             }
         });
     }
@@ -79,10 +106,7 @@ public class MainController {
     Button lastClicked = null;
 
     // THE DEQUE IS USED TO FIND DIRECTORIES IN THE DATABASE MORE EASILY
-    // THE STACK IS USED TO NAVIGATE BACK TO THE PARENT DIRECTORY
-
     private Deque<String> pathQueue = new LinkedList<>();
-    private Stack<String> pathStack = new Stack<>();
 
     private void updateListView(){
         ObservableList<ListViewCellElement> observableList = FXCollections.observableArrayList();
@@ -122,7 +146,6 @@ public class MainController {
             // IF NO SUBJECT IS CURENTLY SELECTED
             if(!test){
                 pathQueue.add(b.getText());
-                pathStack.add(b.getText());
                 lastClicked = (Button) eh.getSource();
                 int number = vbox.getChildren().indexOf(lastClicked);
                 vbox.getChildren().add(number+1, createOptionButton("Dodaj fajl", ADDFILE));
@@ -135,7 +158,6 @@ public class MainController {
             // IF THE SUBJECT THAT IS SELECTED GETS CLICKED
             else if (lastClicked.equals(eh.getSource())){
                 pathQueue.clear();
-                pathStack.clear();
                 int number = vbox.getChildren().indexOf(lastClicked);
                 lastClicked = null;
                 vbox.getChildren().remove(number+1);
@@ -159,10 +181,8 @@ public class MainController {
                 vbox.getChildren().add(numberToAdd+3, createOptionButton("Dodaj internet fajl", ADDINTERNETFILE));
                 vbox.getChildren().add(numberToAdd+4, createOptionButton("Obriši predmet", DELETESUBJECT));
                 test = true;
-                pathStack.clear();
                 pathQueue.clear();
                 pathQueue.add(b.getText());
-                pathStack.add(b.getText());
                 updateListView();
             }
         });

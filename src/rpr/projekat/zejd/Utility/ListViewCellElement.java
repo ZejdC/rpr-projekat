@@ -1,8 +1,11 @@
 package rpr.projekat.zejd.Utility;
 
+import java.io.File;
+
 public class ListViewCellElement {
     private String name;
     private DataType type;
+    private File file;
 
     public ListViewCellElement(String name, DataType type) {
         this.name = name;
