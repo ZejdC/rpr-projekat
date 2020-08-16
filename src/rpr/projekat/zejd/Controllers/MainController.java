@@ -11,6 +11,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.Button;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.input.*;
 import javafx.scene.layout.VBox;
@@ -27,7 +28,19 @@ import rpr.projekat.zejd.Utility.OptionButtons;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.channels.Channels;
+import java.nio.channels.ReadableByteChannel;
+import java.nio.file.CopyOption;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 
 import static rpr.projekat.zejd.Utility.OptionButtons.*;
@@ -88,7 +101,7 @@ public class MainController {
             public void handle(DragEvent dragEvent) {
                 Dragboard db = dragEvent.getDragboard();
                 File file = db.getFiles().get(0);
-                if(file!=null)
+                if(file!=null && !file.isDirectory())
                     model.addFile(pathQueue,file.getName(),file);
                 updateListView();
             }
@@ -97,7 +110,9 @@ public class MainController {
         list.setCellFactory(new Callback<ListView<ListViewCellElement>, ListCell<ListViewCellElement>>() {
             @Override
             public ListCell<ListViewCellElement> call(ListView<ListViewCellElement> listViewCellElementListView) {
-                return new ListViewCell();
+                ListCell<ListViewCellElement> cell = new ListViewCell();
+
+                return cell;
             }
         });
     }
@@ -250,6 +265,8 @@ public class MainController {
                     else if(option.get()==ButtonType.OK){
                         model.deleteSubject(pathQueue);
                         refreshSubjects();
+                        list.getItems().clear();
+                        pathQueue.clear();
                     }
                     else if(option.get()==ButtonType.CANCEL){
                     }
@@ -257,7 +274,54 @@ public class MainController {
                 break;
             case ADDINTERNETFILE:
                 button.setOnAction((handler)->{
-                    // TODO
+                    EnterURLController eu = new EnterURLController();
+                    FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/naming_dialog.fxml"));
+                    loader.setController(eu);
+                    Parent root = null;
+                    try {
+                        root = loader.load();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    Stage stage = new Stage();
+                    stage.setTitle("Naming the subject");
+                    stage.setScene(new Scene(root,600,300));
+                    stage.setResizable(false);
+                    stage.show();
+                    stage.setOnHiding(new EventHandler<WindowEvent>() {
+                        @Override
+                        public void handle(WindowEvent windowEvent) {
+                            Platform.runLater(new Runnable() {
+                                @Override
+                                public void run() {
+                                    String link = eu.getName();
+                                    if(link==null)return;
+                                    new Thread(()->{
+                                       try{
+                                           URL url = new URL(link);
+                                           String name = Paths.get(url.getFile()).getFileName().toString();
+                                           InputStream is = url.openStream();
+                                           File temp = File.createTempFile(name,"."+(name.split("\\."))[1]);
+                                           temp.deleteOnExit();
+                                           temp.setWritable(true);
+                                           Files.copy(is,Paths.get(temp.toURI()), StandardCopyOption.REPLACE_EXISTING);
+                                           model.addFile(pathQueue,name,temp);
+                                           Platform.runLater(new Runnable() {
+                                               @Override
+                                               public void run() {
+                                                   updateListView();
+                                               }
+                                           });
+                                       } catch (MalformedURLException e) {
+                                           e.printStackTrace();
+                                       } catch (IOException e) {
+                                           e.printStackTrace();
+                                       }
+                                    }).start();
+                                }
+                            });
+                        }
+                    });
                 });
                 break;
         }

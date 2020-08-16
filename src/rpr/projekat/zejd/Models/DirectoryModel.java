@@ -19,7 +19,7 @@ public class DirectoryModel {
     private PreparedStatement dodajPredmet, dajSvePredmete, dodajDirektorij, dajPredmetPoImenu, dodajFajl, dajIDDirektorijaPoImenu;
     private PreparedStatement dajKorijenskiDirektorijPredmeta, dajDirektorij,dajDirektorijeUDirektoriju, dajFajloveUDirektoriju, dajFajlUDirektoriju;
 
-    private PreparedStatement obrisiPredmet, obrisiFajlovePredmeta, obrisiDatotekePredmeta;
+    private PreparedStatement obrisiPredmet, obrisiFajlovePredmeta, obrisiDatotekePredmeta, obrisiFajl;
 
     private PreparedStatement updateFile;
 
@@ -50,6 +50,7 @@ public class DirectoryModel {
             obrisiPredmet = con.prepareStatement("DELETE FROM subject WHERE id=?");
             obrisiFajlovePredmeta = con.prepareStatement("DELETE FROM file WHERE subjectid=?");
             obrisiDatotekePredmeta = con.prepareStatement("DELETE FROM directory WHERE subjectid=?");
+            obrisiFajl = con.prepareStatement("DELETE FROM file WHERE parentid=? AND name=?");
             dajDirektorijeUDirektoriju = con.prepareStatement("SELECT * FROM directory WHERE parentid=?");
             dajFajloveUDirektoriju = con.prepareStatement("SELECT * FROM file WHERE parentid=?");
             dajFajlUDirektoriju = con.prepareStatement("SELECT * FROM file WHERE parentid=? AND name=?");
@@ -118,6 +119,7 @@ public class DirectoryModel {
             //WILL ONLY HAVE ONE FOLDER
             Directory root = getDirectoriesFromResultSet(resultSet).get(0);
             while(!path.isEmpty()){
+                assert root != null;
                 root = getDirectory(root.getId(),path.pop());
             }
             return root;
@@ -148,10 +150,8 @@ public class DirectoryModel {
             for (int len; (len = fis.read(buffer)) != -1;) {
                 bos.write(buffer, 0, len);
             }
-        } catch (FileNotFoundException e) {
+        } catch (IOException e) {
             System.err.println(e.getMessage());
-        } catch (IOException e2) {
-            System.err.println(e2.getMessage());
         }
         return bos != null ? bos.toByteArray() : null;
     }
@@ -163,6 +163,7 @@ public class DirectoryModel {
             dodajPredmet.clearParameters();
             Subject s = getSubject(name);
             if(s==null) System.out.println("ERROR");
+            assert s != null;
             addDirectory(null,s.getId(),s.getName());
         } catch (SQLException throwables) {
             throwables.printStackTrace();
@@ -184,6 +185,7 @@ public class DirectoryModel {
         Directory d = getParentDirectory(deepCopy);
         try {
             dodajDirektorij.setString(1,name);
+            assert d != null;
             dodajDirektorij.setInt(2,d.getId());
             dodajDirektorij.setInt(3,d.getSubject());
             dodajDirektorij.execute();
@@ -203,12 +205,11 @@ public class DirectoryModel {
                 alert.setTitle("Overwrite file?");
                 alert.setHeaderText("Are you sure that you want to overwrite this file?");
                 Optional<ButtonType> option = alert.showAndWait();
-                if(option.get()==null){
-                    return;
-                }
-                else if(option.get()==ButtonType.OK){
+                option.get();
+                if(option.get()==ButtonType.OK){
                     try {
                         updateFile.setBytes(1,readFile(f));
+                        assert directory != null;
                         updateFile.setInt(2,directory.getId());
                         updateFile.setString(3,d.getName());
                         updateFile.execute();
@@ -264,6 +265,7 @@ public class DirectoryModel {
             System.out.println("ERROR");
         }
         try {
+            assert subject != null;
             obrisiPredmet.setInt(1,subject.getId());
             obrisiDatotekePredmeta.setInt(1, subject.getId());
             obrisiFajlovePredmeta.setInt(1,subject.getId());
@@ -281,6 +283,7 @@ public class DirectoryModel {
         ArrayList<Directory> list = new ArrayList<>();
         Directory parent = getParentDirectory(deepCopy);
         try {
+            assert parent != null;
             dajDirektorijeUDirektoriju.setInt(1,parent.getId());
             list = getDirectoriesFromResultSet(dajDirektorijeUDirektoriju.executeQuery());
         } catch (SQLException throwables) {
@@ -294,6 +297,7 @@ public class DirectoryModel {
         ArrayList<Data> list = new ArrayList<>();
         Directory parent = getParentDirectory(deepCopy);
         try {
+            assert parent != null;
             dajFajloveUDirektoriju.setInt(1,parent.getId());
             list = getDataFromResultSet(dajFajloveUDirektoriju.executeQuery());
         } catch (SQLException throwables) {
@@ -307,6 +311,7 @@ public class DirectoryModel {
         Directory parent = getParentDirectory(deepCopy);
         File tempFile = null;
         try {
+            assert parent != null;
             dajFajlUDirektoriju.setInt(1,parent.getId());
             dajFajlUDirektoriju.setString(2,name);
             Data data = getDataFromResultSet(dajFajlUDirektoriju.executeQuery()).get(0);
@@ -321,5 +326,18 @@ public class DirectoryModel {
             e.printStackTrace();
         }
         return tempFile;
+    }
+    public void delete(Deque<String> path, String name){
+        Deque<String> deepCopy = new LinkedList<>(path);
+        Directory parent = getParentDirectory(deepCopy);
+
+        try {
+            assert parent != null;
+            obrisiFajl.setInt(1,parent.getId());
+            obrisiFajl.setString(2,name);
+            obrisiFajl.execute();
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        }
     }
 }
