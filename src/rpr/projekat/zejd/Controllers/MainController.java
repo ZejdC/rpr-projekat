@@ -89,7 +89,7 @@ public class MainController {
             @Override
             public void handle(DragEvent event) {
                 Dragboard db = event.getDragboard();
-                if (db.hasFiles()) {
+                if (db.hasFiles() && pathQueue.size()>0) {
                     event.acceptTransferModes(TransferMode.COPY);
                 } else {
                     event.consume();
@@ -354,6 +354,8 @@ public class MainController {
                         if(name==null)return;
                         model.addSubject(name);
                         refreshSubjects();
+                        pathQueue.clear();
+                        list.getItems().clear();
                     }
                 });
             }
