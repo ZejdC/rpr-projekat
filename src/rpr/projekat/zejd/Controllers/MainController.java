@@ -46,7 +46,8 @@ import java.util.*;
 import static rpr.projekat.zejd.Utility.OptionButtons.*;
 
 public class MainController {
-    DirectoryModel model;
+    private DirectoryModel model;
+    private MainController mc;
     @FXML
     private ScrollPane scrlPn;
     @FXML
@@ -55,8 +56,9 @@ public class MainController {
     private ListView<ListViewCellElement> list;
     @FXML
     public void initialize(){
+        mc = this;
         scrlPn.getStylesheets().add(getClass().getResource("/css/subjectbutton.css").toExternalForm());
-        model = new DirectoryModel();
+        model = DirectoryModel.getInstace();
         updateSubjectsFromDatabase();
         list.setOnMouseClicked(new EventHandler<MouseEvent>() {
             @Override
@@ -110,7 +112,7 @@ public class MainController {
         list.setCellFactory(new Callback<ListView<ListViewCellElement>, ListCell<ListViewCellElement>>() {
             @Override
             public ListCell<ListViewCellElement> call(ListView<ListViewCellElement> listViewCellElementListView) {
-                ListCell<ListViewCellElement> cell = new ListViewCell();
+                ListCell<ListViewCellElement> cell = new ListViewCell(model, pathQueue, mc);
 
                 return cell;
             }
@@ -123,7 +125,7 @@ public class MainController {
     // THE DEQUE IS USED TO FIND DIRECTORIES IN THE DATABASE MORE EASILY
     private Deque<String> pathQueue = new LinkedList<>();
 
-    private void updateListView(){
+    public void updateListView(){
         ObservableList<ListViewCellElement> observableList = FXCollections.observableArrayList();
         //ADD A DIRECTORY FROM WHICH YOU CAN ACCESS THE PARENT DIRECTORY
         observableList.add(0,new ListViewCellElement(". . .", DataType.DIRECTORY));
@@ -360,5 +362,13 @@ public class MainController {
                 });
             }
         });
+    }
+    public void toBosnian(ActionEvent actionEvent){
+    }
+    public void toEnglish(ActionEvent actionEvent){
+
+    }
+    public void toGerman(ActionEvent actionEvent){
+
     }
 }

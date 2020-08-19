@@ -3,6 +3,7 @@ package rpr.projekat.zejd.Models;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import rpr.projekat.zejd.Utility.ListViewCellElement;
+import rpr.projekat.zejd.Utility.SameNameException;
 
 import java.io.*;
 import java.sql.*;
@@ -16,12 +17,21 @@ import static java.sql.Types.INTEGER;
 public class DirectoryModel {
     private Connection con = null;
 
+    private static DirectoryModel model;
+
+    public static DirectoryModel getInstace(){
+        if(model == null){
+            return new DirectoryModel();
+        }
+        return model;
+    }
+
     private PreparedStatement dodajPredmet, dajSvePredmete, dodajDirektorij, dajPredmetPoImenu, dodajFajl, dajIDDirektorijaPoImenu;
     private PreparedStatement dajKorijenskiDirektorijPredmeta, dajDirektorij,dajDirektorijeUDirektoriju, dajFajloveUDirektoriju, dajFajlUDirektoriju;
 
-    private PreparedStatement obrisiPredmet, obrisiFajlovePredmeta, obrisiDatotekePredmeta, obrisiFajl;
+    private PreparedStatement obrisiPredmet, obrisiFajlovePredmeta, obrisiDatotekePredmeta, obrisiFajl, queryDeleteDirectory, queryDeleteFile;
 
-    private PreparedStatement updateFile;
+    private PreparedStatement updateFile, queryRenameFile, queryRenameDirectory;
 
     public DirectoryModel(){
         try {
@@ -31,13 +41,14 @@ public class DirectoryModel {
             try {
                 Statement pom = con.createStatement();
                 pom.execute("CREATE TABLE subject(id integer primary key autoincrement, name varchar(50) unique)");
-                pom.execute("CREATE TABLE directory(id integer primary key autoincrement, name varchar(50), parentid integer nullable references directory(id), subjectid integer nullable references subject(id))");
-                pom.execute("CREATE TABLE file(id integer primary key autoincrement, name varchar(50), parentid integer references directory(id), subjectid integer references subject(id), content blob)");
+                pom.execute("CREATE TABLE directory(id integer primary key autoincrement, name varchar(50), parentid integer nullable references directory(id) on delete cascade, subjectid integer nullable references subject(id))");
+                pom.execute("CREATE TABLE file(id integer primary key autoincrement, name varchar(50), parentid integer references directory(id) on delete cascade, subjectid integer references subject(id), content blob)");
             } catch (SQLException ex) {
                 ex.printStackTrace();
             }
         }
         try {
+            con.createStatement().execute("PRAGMA foreign_keys=ON");
             dodajPredmet = con.prepareStatement("INSERT INTO subject(name) VALUES(?)");
             dajSvePredmete = con.prepareStatement("SELECT * FROM subject");
             dodajDirektorij = con.prepareStatement("INSERT INTO directory(name,parentid,subjectid)VALUES(?,?,?)");
@@ -49,13 +60,16 @@ public class DirectoryModel {
             dajDirektorij = con.prepareStatement("SELECT * FROM directory WHERE parentid=? AND name=?");
             obrisiPredmet = con.prepareStatement("DELETE FROM subject WHERE id=?");
             obrisiFajlovePredmeta = con.prepareStatement("DELETE FROM file WHERE subjectid=?");
+            queryDeleteDirectory = con.prepareStatement("DELETE FROM directory WHERE parentid=? AND name=?");
+            queryDeleteFile = con.prepareStatement("DELETE FROM file WHERE parentid=? AND name=?");
             obrisiDatotekePredmeta = con.prepareStatement("DELETE FROM directory WHERE subjectid=?");
-            obrisiFajl = con.prepareStatement("DELETE FROM file WHERE parentid=? AND name=?");
             dajDirektorijeUDirektoriju = con.prepareStatement("SELECT * FROM directory WHERE parentid=?");
             dajFajloveUDirektoriju = con.prepareStatement("SELECT * FROM file WHERE parentid=?");
             dajFajlUDirektoriju = con.prepareStatement("SELECT * FROM file WHERE parentid=? AND name=?");
 
             updateFile = con.prepareStatement("UPDATE file SET content=? WHERE parentid=? AND name=?");
+            queryRenameFile = con.prepareStatement("UPDATE file SET name=? WHERE parentid=? AND name=?");
+            queryRenameDirectory = con.prepareStatement("UPDATE directory SET name=? WHERE parentid=? AND name=?");
         } catch (SQLException throwables) {
             throwables.printStackTrace();
         }
@@ -315,7 +329,8 @@ public class DirectoryModel {
             dajFajlUDirektoriju.setInt(1,parent.getId());
             dajFajlUDirektoriju.setString(2,name);
             Data data = getDataFromResultSet(dajFajlUDirektoriju.executeQuery()).get(0);
-            tempFile = File.createTempFile(name,"."+(name.split("\\."))[1]);
+            String[] array = name.split("\\.");
+            tempFile = File.createTempFile(name,"."+(array[array.length-1]));
             tempFile.setWritable(true);
             FileOutputStream fos = new FileOutputStream(tempFile);
             fos.write(data.getContent());
@@ -327,15 +342,84 @@ public class DirectoryModel {
         }
         return tempFile;
     }
-    public void delete(Deque<String> path, String name){
+
+    public void deleteDirectory(Deque<String> path, String name) {
         Deque<String> deepCopy = new LinkedList<>(path);
         Directory parent = getParentDirectory(deepCopy);
 
         try {
-            assert parent != null;
-            obrisiFajl.setInt(1,parent.getId());
-            obrisiFajl.setString(2,name);
-            obrisiFajl.execute();
+            queryDeleteDirectory.setInt(1,parent.getId());
+            queryDeleteDirectory.setString(2,name);
+            queryDeleteDirectory.execute();
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        }
+    }
+
+    public void deleteFile(Deque<String> path, String name){
+        Deque<String> deepCopy = new LinkedList<>(path);
+        Directory parent = getParentDirectory(deepCopy);
+
+        try {
+            queryDeleteFile.setInt(1,parent.getId());
+            queryDeleteFile.setString(2,name);
+            queryDeleteFile.execute();
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        }
+    }
+
+    public void renameFile(Deque<String> path, String oldName, String newName){
+        Deque<String> deepCopy = new LinkedList<>(path);
+        for(Data d: getFilesInCurrentFolder(deepCopy)){
+            if(d.getName().equals(newName)){
+                Alert a = new Alert(Alert.AlertType.INFORMATION);
+                a.setHeaderText("You can't have two files with the same name in the same folder");
+                a.show();
+                try {
+                    throw new SameNameException("You can't have two files with the same name in the same folder");
+                } catch (SameNameException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        Directory parent = getParentDirectory(deepCopy);
+        String[] array = oldName.split("\\.");
+        if(!newName.contains(array[array.length-1])){
+            newName+="."+array[array.length-1];
+        }
+        try {
+            queryRenameFile.setInt(2,parent.getId());
+            queryRenameFile.setString(3,oldName);
+            queryRenameFile.setString(1,newName);
+            queryRenameFile.execute();
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        }
+    }
+
+    public void renameDirectory(Deque<String> path, String oldName, String newName){
+        Deque<String> deepCopy = new LinkedList<>(path);
+        for(Directory d: getDirectoriesInCurrentFolder(deepCopy)){
+            if(d.getName().equals(newName) || newName.equals(". . .")){
+                Alert a = new Alert(Alert.AlertType.INFORMATION);
+                a.setHeaderText("You can't have two files with the same name in the same folder");
+                a.show();
+                return;
+            }
+        }
+        if(newName.contains(".")){
+            Alert a = new Alert(Alert.AlertType.INFORMATION);
+            a.setHeaderText("Directories can't have '.' in their name");
+            a.show();
+            return;
+        }
+        Directory parent = getParentDirectory(deepCopy);
+        try {
+            queryRenameDirectory.setInt(2,parent.getId());
+            queryRenameDirectory.setString(3,oldName);
+            queryRenameDirectory.setString(1,newName);
+            queryRenameDirectory.execute();
         } catch (SQLException throwables) {
             throwables.printStackTrace();
         }
