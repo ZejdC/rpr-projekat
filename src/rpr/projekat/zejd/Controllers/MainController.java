@@ -46,6 +46,7 @@ import java.util.*;
 import static rpr.projekat.zejd.Utility.OptionButtons.*;
 
 public class MainController {
+    ResourceBundle resourceBundle = ResourceBundle.getBundle("translations");
     private DirectoryModel model;
     private MainController mc;
     @FXML
@@ -65,6 +66,7 @@ public class MainController {
             public void handle(MouseEvent mouseEvent) {
                 if(mouseEvent.getClickCount()==2 && mouseEvent.getButton()== MouseButton.PRIMARY){
                     ListViewCellElement lvce = list.getSelectionModel().getSelectedItem();
+                    if(lvce==null)return;
                     switch (lvce.getType()){
                         case FILE:
                             File file = model.getClickedFile(pathQueue,lvce.getName());
@@ -112,7 +114,7 @@ public class MainController {
         list.setCellFactory(new Callback<ListView<ListViewCellElement>, ListCell<ListViewCellElement>>() {
             @Override
             public ListCell<ListViewCellElement> call(ListView<ListViewCellElement> listViewCellElementListView) {
-                ListCell<ListViewCellElement> cell = new ListViewCell(model, pathQueue, mc);
+                ListCell<ListViewCellElement> cell = new ListViewCell(model, pathQueue, mc, resourceBundle);
 
                 return cell;
             }
@@ -145,6 +147,7 @@ public class MainController {
         }
         brojac = 1;
         test = false;
+        lastClicked=null;
         updateSubjectsFromDatabase();
     }
 
@@ -158,6 +161,7 @@ public class MainController {
 
     private Button createSubjectButton(String text){
         Button b = new Button(text);
+        b.setId(text.toLowerCase());
         b.getStyleClass().add("subjectbutton");
         b.setOnAction((eh)->{
             // IF NO SUBJECT IS CURENTLY SELECTED
@@ -216,6 +220,7 @@ public class MainController {
         button.getStyleClass().add("optionsbutton");
         switch (op){
             case ADDFILE:
+                button.setText(resourceBundle.getString("addfilebtn"));
                 button.setOnAction((handler)->{
                     FileChooser fileChooser = new FileChooser();
                     File file = fileChooser.showOpenDialog(new Stage());
@@ -225,9 +230,10 @@ public class MainController {
                 });
                 break;
             case ADDDIRECTORY:
+                button.setText(resourceBundle.getString("adddirectorybtn"));
                 button.setOnAction((handler)->{
-                    AddDirectoryController ad = new AddDirectoryController();
-                    FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/naming_dialog.fxml"));
+                    AddDirectoryController ad = new AddDirectoryController(resourceBundle.getString("adddirectorytext"));
+                    FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/naming_dialog.fxml"),resourceBundle);
                     loader.setController(ad);
                     Parent root = null;
                     try {
@@ -236,7 +242,7 @@ public class MainController {
                         e.printStackTrace();
                     }
                     Stage stage = new Stage();
-                    stage.setTitle("Naming the subject");
+                    stage.setTitle(resourceBundle.getString("namingtitle"));
                     stage.setScene(new Scene(root,600,300));
                     stage.setResizable(false);
                     stage.show();
@@ -257,10 +263,11 @@ public class MainController {
                 });
                 break;
             case DELETESUBJECT:
+                button.setText(resourceBundle.getString("deletesubjectbtn"));
                 button.setOnAction((handler)->{
                     Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-                    alert.setTitle("Confirm deletion");
-                    alert.setHeaderText("Are you sure you want to delete this subject including all files belonging to the subject?");
+                    alert.setTitle(resourceBundle.getString("confirmdeletion"));
+                    alert.setHeaderText(resourceBundle.getString("deletewarningtext"));
                     Optional<ButtonType> option = alert.showAndWait();
                     if(option.get()==null){
                     }
@@ -275,9 +282,10 @@ public class MainController {
                 });
                 break;
             case ADDINTERNETFILE:
+                button.setText(resourceBundle.getString("addinternetfilebtn"));
                 button.setOnAction((handler)->{
-                    EnterURLController eu = new EnterURLController();
-                    FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/naming_dialog.fxml"));
+                    EnterURLController eu = new EnterURLController(resourceBundle.getString("addinternetfiletext"));
+                    FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/naming_dialog.fxml"),resourceBundle);
                     loader.setController(eu);
                     Parent root = null;
                     try {
@@ -286,7 +294,7 @@ public class MainController {
                         e.printStackTrace();
                     }
                     Stage stage = new Stage();
-                    stage.setTitle("Naming the subject");
+                    stage.setTitle(resourceBundle.getString("namingtitle"));
                     stage.setScene(new Scene(root,600,300));
                     stage.setResizable(false);
                     stage.show();
@@ -331,9 +339,9 @@ public class MainController {
     }
 
     public void addSubject(ActionEvent actionEvent){
-        AddSubjectController as = new AddSubjectController();
+        AddSubjectController as = new AddSubjectController(resourceBundle.getString("addsubjecttext"));
 
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/naming_dialog.fxml"));
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/naming_dialog.fxml"),resourceBundle);
         loader.setController(as);
         Parent root = null;
         try {
@@ -342,7 +350,7 @@ public class MainController {
             e.printStackTrace();
         }
         Stage stage = new Stage();
-        stage.setTitle("Naming the subject");
+        stage.setTitle(resourceBundle.getString("namingtitle"));
         stage.setScene(new Scene(root,600,300));
         stage.setResizable(false);
         stage.show();
@@ -364,11 +372,35 @@ public class MainController {
         });
     }
     public void toBosnian(ActionEvent actionEvent){
+        setLanguage(new Locale("bs","BA"));
     }
     public void toEnglish(ActionEvent actionEvent){
-
+        setLanguage(new Locale("en","EN"));
     }
     public void toGerman(ActionEvent actionEvent){
-
+        setLanguage(new Locale("de","DE"));
+    }
+    private void setLanguage(Locale locale){
+        Locale l = Locale.getDefault();
+        if(l.equals(locale))return;
+        pathQueue.clear();
+        brojac = 1;
+        test = false;
+        lastClicked=null;
+        Stage currentStage = (Stage) list.getScene().getWindow();
+        Locale.setDefault(locale);
+        ResourceBundle resourceBundle = ResourceBundle.getBundle("translations");
+        this.resourceBundle = resourceBundle;
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/main_window.fxml"), resourceBundle);
+        loader.setController(this);
+        Parent root = null;
+        try {
+            root = loader.load();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        currentStage.setScene(new Scene(root, 750, 500));
+        currentStage.setTitle("Subject Management System");
+        currentStage.show();
     }
 }

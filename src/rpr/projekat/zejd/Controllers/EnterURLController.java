@@ -8,14 +8,19 @@ import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 
 public class EnterURLController {
+    String placeholder;
     @FXML
     private TextField subject;
     @FXML
     private Label header;
 
+    public EnterURLController(String addinternetfiletext) {
+        placeholder = addinternetfiletext;
+    }
+
     @FXML
     public void initialize(){
-        header.setText("Enter the URL of the file");
+        header.setText(placeholder);
     }
 
     public void confirm(ActionEvent ae){

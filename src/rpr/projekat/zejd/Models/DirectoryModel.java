@@ -7,10 +7,7 @@ import rpr.projekat.zejd.Utility.SameNameException;
 
 import java.io.*;
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.Deque;
-import java.util.LinkedList;
-import java.util.Optional;
+import java.util.*;
 
 import static java.sql.Types.INTEGER;
 
@@ -215,9 +212,10 @@ public class DirectoryModel {
         deepCopy = new LinkedList<>(path);
         for(Data d:getFilesInCurrentFolder(deepCopy)){
             if(d.getName().equals(name)){
+                ResourceBundle resourceBundle = ResourceBundle.getBundle("translations");
                 Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-                alert.setTitle("Overwrite file?");
-                alert.setHeaderText("Are you sure that you want to overwrite this file?");
+                alert.setTitle(resourceBundle.getString("overwritetitle"));
+                alert.setHeaderText(resourceBundle.getString("overwritetext"));
                 Optional<ButtonType> option = alert.showAndWait();
                 option.get();
                 if(option.get()==ButtonType.OK){
@@ -374,10 +372,11 @@ public class DirectoryModel {
         for(Data d: getFilesInCurrentFolder(deepCopy)){
             if(d.getName().equals(newName)){
                 Alert a = new Alert(Alert.AlertType.INFORMATION);
-                a.setHeaderText("You can't have two files with the same name in the same folder");
+                ResourceBundle resourceBundle = ResourceBundle.getBundle("translations");
+                a.setHeaderText(resourceBundle.getString("duplicateerror"));
                 a.show();
                 try {
-                    throw new SameNameException("You can't have two files with the same name in the same folder");
+                    throw new SameNameException(resourceBundle.getString("duplicateerror"));
                 } catch (SameNameException e) {
                     e.printStackTrace();
                 }
@@ -402,15 +401,17 @@ public class DirectoryModel {
         Deque<String> deepCopy = new LinkedList<>(path);
         for(Directory d: getDirectoriesInCurrentFolder(deepCopy)){
             if(d.getName().equals(newName) || newName.equals(". . .")){
+                ResourceBundle resourceBundle = ResourceBundle.getBundle("translations");
                 Alert a = new Alert(Alert.AlertType.INFORMATION);
-                a.setHeaderText("You can't have two files with the same name in the same folder");
+                a.setHeaderText(resourceBundle.getString("duplicateerror"));
                 a.show();
                 return;
             }
         }
         if(newName.contains(".")){
+            ResourceBundle resourceBundle = ResourceBundle.getBundle("translations");
             Alert a = new Alert(Alert.AlertType.INFORMATION);
-            a.setHeaderText("Directories can't have '.' in their name");
+            a.setHeaderText(resourceBundle.getString("doterror"));
             a.show();
             return;
         }

@@ -9,14 +9,19 @@ import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 
 public class AddDirectoryController {
+    String placeholder;
     @FXML
     private TextField subject;
     @FXML
     private Label header;
 
+    public AddDirectoryController(String adddirectorytext) {
+        placeholder = adddirectorytext;
+    }
+
     @FXML
     public void initialize(){
-        header.setText("What is the name of the directory you want to add?");
+        header.setText(placeholder);
     }
 
     public void confirm(ActionEvent ae){

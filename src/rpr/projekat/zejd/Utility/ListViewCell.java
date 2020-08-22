@@ -27,6 +27,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.Deque;
+import java.util.ResourceBundle;
 
 public class ListViewCell extends ListCell<ListViewCellElement> {
     @FXML
@@ -44,17 +45,20 @@ public class ListViewCell extends ListCell<ListViewCellElement> {
 
     private MainController mainController;
 
-    public ListViewCell(DirectoryModel model, Deque<String> pathQueue, MainController mc) {
+    private ResourceBundle resourceBundle;
+
+    public ListViewCell(DirectoryModel model, Deque<String> pathQueue, MainController mc, ResourceBundle resourceBundle) {
         this.model = model;
         path = pathQueue;
         mainController = mc;
+        this.resourceBundle = resourceBundle;
     }
 
     @Override
     protected void updateItem(ListViewCellElement listViewCellElement, boolean empty) {
         ContextMenu cm1 = new ContextMenu();
         if(listViewCellElement != null && !listViewCellElement.getName().equals(". . .")) {
-            MenuItem mi = new MenuItem("Delete");
+            MenuItem mi = new MenuItem(resourceBundle.getString("delete"));
             mi.setOnAction(new EventHandler<ActionEvent>() {
                 @Override
                 public void handle(ActionEvent actionEvent) {
@@ -80,7 +84,7 @@ public class ListViewCell extends ListCell<ListViewCellElement> {
                     }
                 }
             });
-            MenuItem mi2 = new MenuItem("Rename");
+            MenuItem mi2 = new MenuItem(resourceBundle.getString("rename"));
             mi2.setOnAction(new EventHandler<ActionEvent>() {
                 @Override
                 public void handle(ActionEvent actionEvent) {
@@ -94,7 +98,7 @@ public class ListViewCell extends ListCell<ListViewCellElement> {
                         e.printStackTrace();
                     }
                     Stage stage = new Stage();
-                    stage.setTitle("Rename");
+                    stage.setTitle(resourceBundle.getString("rename"));
                     stage.setScene(new Scene(root,600,300));
                     stage.setResizable(false);
                     stage.show();
@@ -135,6 +139,7 @@ public class ListViewCell extends ListCell<ListViewCellElement> {
         if(empty || listViewCellElement==null){
             setText(null);
             setGraphic(null);
+            cm1.getItems().clear();
         }
         else{
             if(loader == null){

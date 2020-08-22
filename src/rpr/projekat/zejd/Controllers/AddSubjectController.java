@@ -8,14 +8,19 @@ import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 
 public class AddSubjectController {
+    String placeholder;
     @FXML
     private TextField subject;
     @FXML
     private Label header;
 
+    public AddSubjectController(String addsubjecttext) {
+        placeholder = addsubjecttext;
+    }
+
     @FXML
     public void initialize(){
-        header.setText("What is the name of the subject you want to add?");
+        header.setText(placeholder);
     }
 
     public void confirm(ActionEvent ae){

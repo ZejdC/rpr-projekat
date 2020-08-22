@@ -9,12 +9,14 @@ import rpr.projekat.zejd.Controllers.MainController;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ResourceBundle;
 
 public class Main extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception{
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/main_window.fxml"));
+        ResourceBundle resourceBundle = ResourceBundle.getBundle("translations");
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/main_window.fxml"),resourceBundle);
         Files.createDirectories(Paths.get(System.getProperty("user.home")+"/"+"SubjectManagementSystem"));
         loader.setController(new MainController());
         Parent root = loader.load();

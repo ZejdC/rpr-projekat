@@ -11,7 +11,7 @@
          <content>
             <VBox fx:id="vbox" fillWidth="false" maxHeight="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity">
                <children>
-                  <Button fx:id="addBtn" mnemonicParsing="false" onAction="#addSubject" prefHeight="60.0" prefWidth="200.0" styleClass="addbutton" stylesheets="@../css/subjectbutton.css" text="Dodaj predmet" />
+                  <Button fx:id="addBtn" mnemonicParsing="false" onAction="#addSubject" prefHeight="60.0" prefWidth="200.0" styleClass="addbutton" stylesheets="@../css/subjectbutton.css" text="%addsubjectbtn" />
                </children>
             </VBox>
          </content>
