@@ -1,6 +1,6 @@
 package rpr.projekat.zejd.Models;
 
-public class Location {
+public abstract class Location {
     private String name;
 
     public Location(String adress) {

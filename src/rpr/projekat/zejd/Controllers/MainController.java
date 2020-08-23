@@ -124,7 +124,7 @@ public class MainController {
     boolean test = false;
     Button lastClicked = null;
 
-    // THE DEQUE IS USED TO FIND DIRECTORIES IN THE DATABASE MORE EASILY
+    // THE DEQUE IS USED TO FIND DIRECTORIES IN THE DATABASE MORE EASILY AND RETURN TO PARENT DIRECTORIES
     private Deque<String> pathQueue = new LinkedList<>();
 
     public void updateListView(){
