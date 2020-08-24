@@ -16,11 +16,15 @@ public class DirectoryModel {
 
     private static DirectoryModel model;
 
-    public static DirectoryModel getInstace(){
+    public static DirectoryModel getInstance(){
         if(model == null){
             return new DirectoryModel();
         }
         return model;
+    }
+
+    public static void destroyInstance(){
+        model = null;
     }
 
     private PreparedStatement dodajPredmet, dajSvePredmete, dodajDirektorij, dajPredmetPoImenu, dodajFajl, dajIDDirektorijaPoImenu;

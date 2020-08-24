@@ -17,7 +17,6 @@ public class Main extends Application {
     public void start(Stage primaryStage) throws Exception{
         ResourceBundle resourceBundle = ResourceBundle.getBundle("translations");
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/main_window.fxml"),resourceBundle);
-        Files.createDirectories(Paths.get(System.getProperty("user.home")+"/"+"SubjectManagementSystem"));
         loader.setController(new MainController());
         Parent root = loader.load();
         primaryStage.setMinWidth(500);

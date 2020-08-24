@@ -11,7 +11,6 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.Button;
-import javafx.scene.control.MenuItem;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.input.*;
 import javafx.scene.layout.VBox;
@@ -25,19 +24,12 @@ import rpr.projekat.zejd.Utility.ListViewCell;
 import rpr.projekat.zejd.Utility.ListViewCellElement;
 import rpr.projekat.zejd.Utility.OptionButtons;
 
-import javax.swing.*;
 import java.awt.*;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.channels.Channels;
-import java.nio.channels.ReadableByteChannel;
-import java.nio.file.CopyOption;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
@@ -59,7 +51,7 @@ public class MainController {
     public void initialize(){
         mc = this;
         scrlPn.getStylesheets().add(getClass().getResource("/css/subjectbutton.css").toExternalForm());
-        model = DirectoryModel.getInstace();
+        model = DirectoryModel.getInstance();
         updateSubjectsFromDatabase();
         list.setOnMouseClicked(new EventHandler<MouseEvent>() {
             @Override
@@ -221,6 +213,7 @@ public class MainController {
         switch (op){
             case ADDFILE:
                 button.setText(resourceBundle.getString("addfilebtn"));
+                button.setId("addfilebtn");
                 button.setOnAction((handler)->{
                     FileChooser fileChooser = new FileChooser();
                     File file = fileChooser.showOpenDialog(new Stage());
@@ -231,6 +224,7 @@ public class MainController {
                 break;
             case ADDDIRECTORY:
                 button.setText(resourceBundle.getString("adddirectorybtn"));
+                button.setId("adddirectorybtn");
                 button.setOnAction((handler)->{
                     AddDirectoryController ad = new AddDirectoryController(resourceBundle.getString("adddirectorytext"));
                     FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/naming_dialog.fxml"),resourceBundle);
