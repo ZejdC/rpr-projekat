@@ -258,6 +258,7 @@ public class MainController {
                 break;
             case DELETESUBJECT:
                 button.setText(resourceBundle.getString("deletesubjectbtn"));
+                button.setId("deletesubjectbtn");
                 button.setOnAction((handler)->{
                     Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
                     alert.setTitle(resourceBundle.getString("confirmdeletion"));
@@ -277,6 +278,7 @@ public class MainController {
                 break;
             case ADDINTERNETFILE:
                 button.setText(resourceBundle.getString("addinternetfilebtn"));
+                button.setId("addinternetfilebtn");
                 button.setOnAction((handler)->{
                     EnterURLController eu = new EnterURLController(resourceBundle.getString("addinternetfiletext"));
                     FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/naming_dialog.fxml"),resourceBundle);

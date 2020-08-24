@@ -372,6 +372,7 @@ public class DirectoryModel {
     }
 
     public void renameFile(Deque<String> path, String oldName, String newName){
+        if(oldName.equals(newName))return;
         Deque<String> deepCopy = new LinkedList<>(path);
         for(Data d: getFilesInCurrentFolder(deepCopy)){
             if(d.getName().equals(newName)){
