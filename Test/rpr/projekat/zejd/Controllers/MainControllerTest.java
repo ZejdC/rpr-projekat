@@ -36,11 +36,13 @@ import static javafx.scene.layout.Region.USE_COMPUTED_SIZE;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class MainControllerTest {
     FXMLLoader loader;
-    @Start
-    public void start(Stage stage){
+    @BeforeAll
+    public static void start(){
         File f = new File("files.db");
         f.delete();
-
+    }
+    @Start
+    public void start(Stage stage){
         ResourceBundle resourceBundle = ResourceBundle.getBundle("translations");
         this.loader = new FXMLLoader(getClass().getResource("/fxml/main_window.fxml"),resourceBundle);
         loader.setController(new MainController());
