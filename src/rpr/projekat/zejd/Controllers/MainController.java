@@ -29,6 +29,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -62,10 +63,15 @@ public class MainController {
                     switch (lvce.getType()){
                         case FILE:
                             File file = model.getClickedFile(pathQueue,lvce.getName());
-                            try {
-                                Desktop.getDesktop().open(file);
-                            } catch (IOException e) {
-                                e.printStackTrace();
+                            if( Desktop.isDesktopSupported() )
+                            {
+                                new Thread(() -> {
+                                    try {
+                                        Desktop.getDesktop().open(file);
+                                    } catch (IOException e1) {
+                                        e1.printStackTrace();
+                                    }
+                                }).start();
                             }
                             break;
                         case DIRECTORY:

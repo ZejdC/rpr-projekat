@@ -23,6 +23,7 @@ import rpr.projekat.zejd.Models.DirectoryModel;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileSystemView;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -52,6 +53,25 @@ public class ListViewCell extends ListCell<ListViewCellElement> {
         path = pathQueue;
         mainController = mc;
         this.resourceBundle = resourceBundle;
+    }
+
+    public static BufferedImage toBufferedImage(java.awt.Image img)
+    {
+        if (img instanceof BufferedImage)
+        {
+            return (BufferedImage) img;
+        }
+
+        // Create a buffered image with transparency
+        BufferedImage bimage = new BufferedImage(img.getWidth(null), img.getHeight(null), BufferedImage.TYPE_INT_ARGB);
+
+        // Draw the image on to the buffered image
+        Graphics2D bGr = bimage.createGraphics();
+        bGr.drawImage(img, 0, 0, null);
+        bGr.dispose();
+
+        // Return the buffered image
+        return bimage;
     }
 
     @Override
@@ -166,7 +186,7 @@ public class ListViewCell extends ListCell<ListViewCellElement> {
                         e.printStackTrace();
                     }
                     ImageIcon icon = (ImageIcon) FileSystemView.getFileSystemView().getSystemIcon(temp);
-                    BufferedImage bi = (BufferedImage) icon.getImage();
+                    BufferedImage bi = toBufferedImage(icon.getImage());
                     Image fxIcon = SwingFXUtils.toFXImage(bi, null);
                     this.icon.setFitHeight(16);
                     this.icon.setFitWidth(16);
