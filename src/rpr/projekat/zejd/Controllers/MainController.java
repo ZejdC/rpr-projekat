@@ -1,8 +1,6 @@
 package rpr.projekat.zejd.Controllers;
 
 import javafx.application.Platform;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
@@ -29,7 +27,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -41,7 +38,7 @@ import static rpr.projekat.zejd.Utility.OptionButtons.*;
 public class MainController {
     ResourceBundle resourceBundle = ResourceBundle.getBundle("translations");
     private DirectoryModel model;
-    private MainController mc;
+    private MainController mainController;
     @FXML
     private ScrollPane scrlPn;
     @FXML
@@ -50,7 +47,7 @@ public class MainController {
     private ListView<ListViewCellElement> list;
     @FXML
     public void initialize(){
-        mc = this;
+        mainController = this;
         scrlPn.getStylesheets().add(getClass().getResource("/css/subjectbutton.css").toExternalForm());
         model = DirectoryModel.getInstance();
         updateSubjectsFromDatabase();
@@ -81,7 +78,12 @@ public class MainController {
                             else if(!lvce.getName().equals(". . .")){
                                 pathQueue.add(lvce.getName());
                             }
-                            updateListView();
+                            Platform.runLater(new Runnable() {
+                                @Override
+                                public void run() {
+                                    updateListView();
+                                }
+                            });
                             break;
                     }
                 }
@@ -102,9 +104,10 @@ public class MainController {
             @Override
             public void handle(DragEvent dragEvent) {
                 Dragboard db = dragEvent.getDragboard();
-                File file = db.getFiles().get(0);
-                if(file!=null && !file.isDirectory())
-                    model.addFile(pathQueue,file.getName(),file);
+                for(File file: db.getFiles()){
+                    if(file!=null && !file.isDirectory())
+                        model.addFile(pathQueue,file.getName(),file);
+                }
                 updateListView();
             }
         });
@@ -112,30 +115,27 @@ public class MainController {
         list.setCellFactory(new Callback<ListView<ListViewCellElement>, ListCell<ListViewCellElement>>() {
             @Override
             public ListCell<ListViewCellElement> call(ListView<ListViewCellElement> listViewCellElementListView) {
-                ListCell<ListViewCellElement> cell = new ListViewCell(model, pathQueue, mc, resourceBundle);
-
+                ListCell<ListViewCellElement> cell = new ListViewCell(model, pathQueue, mainController, resourceBundle);
                 return cell;
             }
         });
     }
-    int brojac = 1;
-    boolean test = false;
-    Button lastClicked = null;
+    boolean optionButtonsVisible = false;
+    Button lastButtonClicked = null;
 
     // THE DEQUE IS USED TO FIND DIRECTORIES IN THE DATABASE MORE EASILY AND RETURN TO PARENT DIRECTORIES
     private Deque<String> pathQueue = new LinkedList<>();
 
     public void updateListView(){
-        ObservableList<ListViewCellElement> observableList = FXCollections.observableArrayList();
+        list.getItems().clear();
         //ADD A DIRECTORY FROM WHICH YOU CAN ACCESS THE PARENT DIRECTORY
-        observableList.add(0,new ListViewCellElement(". . .", DataType.DIRECTORY));
+        list.getItems().add(0,new ListViewCellElement(". . .", DataType.DIRECTORY));
         for(Directory d: model.getDirectoriesInCurrentFolder(pathQueue)){
-            observableList.add(new ListViewCellElement(d.getName(),DataType.DIRECTORY));
+            list.getItems().add(new ListViewCellElement(d.getName(),DataType.DIRECTORY));
         }
         for(Data d: model.getFilesInCurrentFolder(pathQueue)){
-            observableList.add(new ListViewCellElement(d.getName(),DataType.FILE));
+            list.getItems().add(new ListViewCellElement(d.getName(),DataType.FILE));
         }
-        list.setItems(observableList);
     }
 
     private void refreshSubjects(){
@@ -143,9 +143,8 @@ public class MainController {
         for(int i = 1; i < size; i++){
             vbox.getChildren().remove(1);
         }
-        brojac = 1;
-        test = false;
-        lastClicked=null;
+        optionButtonsVisible = false;
+        lastButtonClicked =null;
         updateSubjectsFromDatabase();
     }
 
@@ -158,61 +157,57 @@ public class MainController {
     }
 
     private Button createSubjectButton(String text){
-        Button b = new Button(text);
-        b.setId(text.toLowerCase());
-        b.getStyleClass().add("subjectbutton");
-        b.setOnAction((eh)->{
-            // IF NO SUBJECT IS CURENTLY SELECTED
-            if(!test){
-                pathQueue.add(b.getText());
-                lastClicked = (Button) eh.getSource();
-                int number = vbox.getChildren().indexOf(lastClicked);
-                vbox.getChildren().add(number+1, createOptionButton("Dodaj fajl", ADDFILE));
-                vbox.getChildren().add(number+2, createOptionButton("Dodaj direktorij", ADDDIRECTORY));
-                vbox.getChildren().add(number+3, createOptionButton("Dodaj internet fajl", ADDINTERNETFILE));
-                vbox.getChildren().add(number+4, createOptionButton("Obriši predmet", DELETESUBJECT));
+        Button newButton = new Button(text);
+        newButton.setId(text.toLowerCase());
+        newButton.getStyleClass().add("subjectbutton");
+        newButton.setOnAction((eh)->{
+            if(!optionButtonsVisible){
+                pathQueue.add(newButton.getText());
+                lastButtonClicked = (Button) eh.getSource();
+                int number = vbox.getChildren().indexOf(lastButtonClicked);
+                vbox.getChildren().add(number+1, createOptionButton(ADDFILE));
+                vbox.getChildren().add(number+2, createOptionButton(ADDDIRECTORY));
+                vbox.getChildren().add(number+3, createOptionButton(ADDINTERNETFILE));
+                vbox.getChildren().add(number+4, createOptionButton(DELETESUBJECT));
                 updateListView();
-                test = true;
+                optionButtonsVisible = true;
             }
-            // IF THE SUBJECT THAT IS SELECTED GETS CLICKED
-            else if (lastClicked.equals(eh.getSource())){
+            else if (lastButtonClicked.equals(eh.getSource())){
                 pathQueue.clear();
-                int number = vbox.getChildren().indexOf(lastClicked);
-                lastClicked = null;
+                int number = vbox.getChildren().indexOf(lastButtonClicked);
+                lastButtonClicked = null;
                 vbox.getChildren().remove(number+1);
                 vbox.getChildren().remove(number+1);
                 vbox.getChildren().remove(number+1);
                 vbox.getChildren().remove(number+1);
                 list.getItems().clear();
-                test = false;
+                optionButtonsVisible = false;
             }
-            // IF A SUBJECT IS SELECTED AND ANOTHER SUBJECT GETS CLICKED
             else{
-                int numberToDelete = vbox.getChildren().indexOf(lastClicked);
-                lastClicked = (Button) eh.getSource();
-                vbox.getChildren().remove(numberToDelete+1);
-                vbox.getChildren().remove(numberToDelete+1);
-                vbox.getChildren().remove(numberToDelete+1);
-                vbox.getChildren().remove(numberToDelete+1);
-                int numberToAdd = vbox.getChildren().indexOf(lastClicked);
-                vbox.getChildren().add(numberToAdd+1, createOptionButton("Dodaj fajl", ADDFILE));
-                vbox.getChildren().add(numberToAdd+2, createOptionButton("Dodaj direktorij", ADDDIRECTORY));
-                vbox.getChildren().add(numberToAdd+3, createOptionButton("Dodaj internet fajl", ADDINTERNETFILE));
-                vbox.getChildren().add(numberToAdd+4, createOptionButton("Obriši predmet", DELETESUBJECT));
-                test = true;
+                int indexToDelete = vbox.getChildren().indexOf(lastButtonClicked);
+                lastButtonClicked = (Button) eh.getSource();
+                vbox.getChildren().remove(indexToDelete+1);
+                vbox.getChildren().remove(indexToDelete+1);
+                vbox.getChildren().remove(indexToDelete+1);
+                vbox.getChildren().remove(indexToDelete+1);
+                int numberToAdd = vbox.getChildren().indexOf(lastButtonClicked);
+                vbox.getChildren().add(numberToAdd+1, createOptionButton(ADDFILE));
+                vbox.getChildren().add(numberToAdd+2, createOptionButton(ADDDIRECTORY));
+                vbox.getChildren().add(numberToAdd+3, createOptionButton(ADDINTERNETFILE));
+                vbox.getChildren().add(numberToAdd+4, createOptionButton(DELETESUBJECT));
+                optionButtonsVisible = true;
                 pathQueue.clear();
-                pathQueue.add(b.getText());
+                pathQueue.add(newButton.getText());
                 updateListView();
             }
         });
-        b.setPrefWidth(200);
-        b.setPrefHeight(60);
-        brojac++;
-        return b;
+        newButton.setPrefWidth(200);
+        newButton.setPrefHeight(60);
+        return newButton;
     }
 
-    private Button createOptionButton(String text, OptionButtons op){
-        Button button = new Button(text);
+    private Button createOptionButton(OptionButtons op){
+        Button button = new Button();
         button.setPrefWidth(200);
         button.setPrefHeight(60);
         button.getStyleClass().add("optionsbutton");
@@ -386,9 +381,8 @@ public class MainController {
         Locale l = Locale.getDefault();
         if(l.equals(locale))return;
         pathQueue.clear();
-        brojac = 1;
-        test = false;
-        lastClicked=null;
+        optionButtonsVisible = false;
+        lastButtonClicked =null;
         Stage currentStage = (Stage) list.getScene().getWindow();
         Locale.setDefault(locale);
         ResourceBundle resourceBundle = ResourceBundle.getBundle("translations");

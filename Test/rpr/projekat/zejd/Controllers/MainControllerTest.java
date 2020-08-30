@@ -147,7 +147,8 @@ class MainControllerTest {
         robot.write("catto");
         robot.clickOn("#okBtn");
     }
-    @Test @Order(8)
+
+    @Test @Order(9)
     void deleteSubject(FxRobot robot){
         robot.clickOn("RPR");
         robot.clickOn("#deletesubjectbtn");
