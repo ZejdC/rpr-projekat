@@ -29,6 +29,7 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
@@ -39,6 +40,7 @@ public class MainController {
     ResourceBundle resourceBundle = ResourceBundle.getBundle("translations");
     private DirectoryModel model;
     private MainController mainController;
+    private final int numberOfOptions = OptionButtons.values().length;
     @FXML
     private ScrollPane scrlPn;
     @FXML
@@ -78,53 +80,36 @@ public class MainController {
                             else if(!lvce.getName().equals(". . .")){
                                 pathQueue.add(lvce.getName());
                             }
-                            Platform.runLater(new Runnable() {
-                                @Override
-                                public void run() {
-                                    updateListView();
-                                }
-                            });
+                            Platform.runLater(() -> updateListView());
                             break;
                     }
                 }
             }
         });
-        list.setOnDragOver(new EventHandler<DragEvent>() {
-            @Override
-            public void handle(DragEvent event) {
-                Dragboard db = event.getDragboard();
-                if (db.hasFiles() && pathQueue.size()>0) {
-                    event.acceptTransferModes(TransferMode.COPY);
-                } else {
-                    event.consume();
-                }
+        list.setOnDragOver(event -> {
+            Dragboard db = event.getDragboard();
+            if (db.hasFiles() && pathQueue.size()>0) {
+                event.acceptTransferModes(TransferMode.COPY);
+            } else {
+                event.consume();
             }
         });
-        list.setOnDragDropped(new EventHandler<DragEvent>() {
-            @Override
-            public void handle(DragEvent dragEvent) {
-                Dragboard db = dragEvent.getDragboard();
-                for(File file: db.getFiles()){
-                    if(file!=null && !file.isDirectory())
-                        model.addFile(pathQueue,file.getName(),file);
-                }
-                updateListView();
+        list.setOnDragDropped(dragEvent -> {
+            Dragboard db = dragEvent.getDragboard();
+            for(File file: db.getFiles()){
+                if(file!=null && !file.isDirectory())
+                    model.addFile(pathQueue,file.getName(),file);
             }
+            updateListView();
         });
         list.setFixedCellSize(32);
-        list.setCellFactory(new Callback<ListView<ListViewCellElement>, ListCell<ListViewCellElement>>() {
-            @Override
-            public ListCell<ListViewCellElement> call(ListView<ListViewCellElement> listViewCellElementListView) {
-                ListCell<ListViewCellElement> cell = new ListViewCell(model, pathQueue, mainController, resourceBundle);
-                return cell;
-            }
-        });
+        list.setCellFactory(factory -> new ListViewCell(model, pathQueue, mainController, resourceBundle));
     }
     boolean optionButtonsVisible = false;
     Button lastButtonClicked = null;
 
     // THE DEQUE IS USED TO FIND DIRECTORIES IN THE DATABASE MORE EASILY AND RETURN TO PARENT DIRECTORIES
-    private Deque<String> pathQueue = new LinkedList<>();
+    private final Deque<String> pathQueue = new LinkedList<>();
 
     public void updateListView(){
         list.getItems().clear();
@@ -139,10 +124,7 @@ public class MainController {
     }
 
     private void refreshSubjects(){
-        int size = vbox.getChildren().size();
-        for(int i = 1; i < size; i++){
-            vbox.getChildren().remove(1);
-        }
+        vbox.getChildren().subList(1,vbox.getChildren().size()).clear();
         optionButtonsVisible = false;
         lastButtonClicked =null;
         updateSubjectsFromDatabase();
@@ -155,6 +137,17 @@ public class MainController {
             vbox.getChildren().add(b);
         }
     }
+    private void removeOptionButtons(int indexOfFirstButton){
+        for(int i = 0; i < numberOfOptions; i++){
+            vbox.getChildren().remove(indexOfFirstButton+1);
+        }
+    }
+    private void addOptionButtons(int indexOfFirstButton){
+        vbox.getChildren().add(indexOfFirstButton+1, createOptionButton(ADDFILE));
+        vbox.getChildren().add(indexOfFirstButton+2, createOptionButton(ADDDIRECTORY));
+        vbox.getChildren().add(indexOfFirstButton+3, createOptionButton(ADDINTERNETFILE));
+        vbox.getChildren().add(indexOfFirstButton+4, createOptionButton(DELETESUBJECT));
+    }
 
     private Button createSubjectButton(String text){
         Button newButton = new Button(text);
@@ -164,37 +157,25 @@ public class MainController {
             if(!optionButtonsVisible){
                 pathQueue.add(newButton.getText());
                 lastButtonClicked = (Button) eh.getSource();
-                int number = vbox.getChildren().indexOf(lastButtonClicked);
-                vbox.getChildren().add(number+1, createOptionButton(ADDFILE));
-                vbox.getChildren().add(number+2, createOptionButton(ADDDIRECTORY));
-                vbox.getChildren().add(number+3, createOptionButton(ADDINTERNETFILE));
-                vbox.getChildren().add(number+4, createOptionButton(DELETESUBJECT));
+                int indexOfButton = vbox.getChildren().indexOf(lastButtonClicked);
+                addOptionButtons(indexOfButton);
                 updateListView();
                 optionButtonsVisible = true;
             }
             else if (lastButtonClicked.equals(eh.getSource())){
                 pathQueue.clear();
-                int number = vbox.getChildren().indexOf(lastButtonClicked);
+                int indexOfButton = vbox.getChildren().indexOf(lastButtonClicked);
                 lastButtonClicked = null;
-                vbox.getChildren().remove(number+1);
-                vbox.getChildren().remove(number+1);
-                vbox.getChildren().remove(number+1);
-                vbox.getChildren().remove(number+1);
+                removeOptionButtons(indexOfButton);
                 list.getItems().clear();
                 optionButtonsVisible = false;
             }
             else{
                 int indexToDelete = vbox.getChildren().indexOf(lastButtonClicked);
                 lastButtonClicked = (Button) eh.getSource();
-                vbox.getChildren().remove(indexToDelete+1);
-                vbox.getChildren().remove(indexToDelete+1);
-                vbox.getChildren().remove(indexToDelete+1);
-                vbox.getChildren().remove(indexToDelete+1);
-                int numberToAdd = vbox.getChildren().indexOf(lastButtonClicked);
-                vbox.getChildren().add(numberToAdd+1, createOptionButton(ADDFILE));
-                vbox.getChildren().add(numberToAdd+2, createOptionButton(ADDDIRECTORY));
-                vbox.getChildren().add(numberToAdd+3, createOptionButton(ADDINTERNETFILE));
-                vbox.getChildren().add(numberToAdd+4, createOptionButton(DELETESUBJECT));
+                removeOptionButtons(indexToDelete);
+                int indexToAdd = vbox.getChildren().indexOf(lastButtonClicked);
+                addOptionButtons(indexToAdd);
                 optionButtonsVisible = true;
                 pathQueue.clear();
                 pathQueue.add(newButton.getText());
@@ -238,23 +219,16 @@ public class MainController {
                     }
                     Stage stage = new Stage();
                     stage.setTitle(resourceBundle.getString("namingtitle"));
+                    assert root != null;
                     stage.setScene(new Scene(root,600,300));
                     stage.setResizable(false);
                     stage.show();
-                    stage.setOnHiding(new EventHandler<WindowEvent>() {
-                        @Override
-                        public void handle(WindowEvent windowEvent) {
-                            Platform.runLater(new Runnable() {
-                                @Override
-                                public void run() {
-                                    String name = ad.getName();
-                                    if(name==null)return;
-                                    model.addDirectory(pathQueue,name);
-                                    updateListView();
-                                }
-                            });
-                        }
-                    });
+                    stage.setOnHiding(windowEvent -> Platform.runLater(() -> {
+                        String name = ad.getName();
+                        if(name==null)return;
+                        model.addDirectory(pathQueue,name);
+                        updateListView();
+                    }));
                 });
                 break;
             case DELETESUBJECT:
@@ -265,15 +239,11 @@ public class MainController {
                     alert.setTitle(resourceBundle.getString("confirmdeletion"));
                     alert.setHeaderText(resourceBundle.getString("deletewarningtext"));
                     Optional<ButtonType> option = alert.showAndWait();
-                    if(option.get()==null){
-                    }
-                    else if(option.get()==ButtonType.OK){
+                    if(option.isPresent() && option.get()==ButtonType.OK){
                         model.deleteSubject(pathQueue);
                         refreshSubjects();
                         list.getItems().clear();
                         pathQueue.clear();
-                    }
-                    else if(option.get()==ButtonType.CANCEL){
                     }
                 });
                 break;
@@ -292,43 +262,34 @@ public class MainController {
                     }
                     Stage stage = new Stage();
                     stage.setTitle(resourceBundle.getString("namingtitle"));
+                    assert root != null;
                     stage.setScene(new Scene(root,600,300));
                     stage.setResizable(false);
                     stage.show();
-                    stage.setOnHiding(new EventHandler<WindowEvent>() {
-                        @Override
-                        public void handle(WindowEvent windowEvent) {
-                            Platform.runLater(new Runnable() {
-                                @Override
-                                public void run() {
-                                    String link = eu.getName();
-                                    if(link==null)return;
-                                    new Thread(()->{
-                                       try{
-                                           URL url = new URL(link);
-                                           String name = Paths.get(url.getFile()).getFileName().toString();
-                                           InputStream is = url.openStream();
-                                           File temp = File.createTempFile(name,"."+(name.split("\\."))[1]);
-                                           temp.deleteOnExit();
-                                           temp.setWritable(true);
-                                           Files.copy(is,Paths.get(temp.toURI()), StandardCopyOption.REPLACE_EXISTING);
-                                           model.addFile(pathQueue,name,temp);
-                                           Platform.runLater(new Runnable() {
-                                               @Override
-                                               public void run() {
-                                                   updateListView();
-                                               }
-                                           });
-                                       } catch (MalformedURLException e) {
-                                           e.printStackTrace();
-                                       } catch (IOException e) {
-                                           e.printStackTrace();
-                                       }
-                                    }).start();
-                                }
-                            });
-                        }
-                    });
+                    stage.setOnHiding(windowEvent -> Platform.runLater(() -> {
+                        String link = eu.getName();
+                        if(link==null)return;
+                        new Thread(()->{
+                           try{
+                               URL url = new URL(link);
+                               String name = Paths.get(url.getFile().trim()).getFileName().toString();
+                               InputStream is = url.openStream();
+                               File temp = File.createTempFile(name,"."+(name.split("\\."))[1]);
+                               temp.deleteOnExit();
+                               temp.setWritable(true);
+                               Files.copy(is,Paths.get(temp.toURI()), StandardCopyOption.REPLACE_EXISTING);
+                               model.addFile(pathQueue,name,temp);
+                               Platform.runLater(this::updateListView);
+                           } catch (IOException|InvalidPathException e) {
+                               Platform.runLater(()->{
+                                   Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                                   alert.setHeaderText("Invalid URL!");
+                                   alert.show();
+                               });
+                               e.printStackTrace();
+                           }
+                        }).start();
+                    }));
                 });
                 break;
         }
@@ -336,10 +297,10 @@ public class MainController {
     }
 
     public void addSubject(ActionEvent actionEvent){
-        AddSubjectController as = new AddSubjectController(resourceBundle.getString("addsubjecttext"));
+        AddSubjectController addSubjectController = new AddSubjectController(resourceBundle.getString("addsubjecttext"));
 
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/naming_dialog.fxml"),resourceBundle);
-        loader.setController(as);
+        loader.setController(addSubjectController);
         Parent root = null;
         try {
             root = loader.load();
@@ -348,25 +309,18 @@ public class MainController {
         }
         Stage stage = new Stage();
         stage.setTitle(resourceBundle.getString("namingtitle"));
+        assert root != null;
         stage.setScene(new Scene(root,600,300));
         stage.setResizable(false);
         stage.show();
-        stage.setOnHiding(new EventHandler<WindowEvent>() {
-            @Override
-            public void handle(WindowEvent windowEvent) {
-                Platform.runLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        String name = as.getName();
-                        if(name==null)return;
-                        model.addSubject(name);
-                        refreshSubjects();
-                        pathQueue.clear();
-                        list.getItems().clear();
-                    }
-                });
-            }
-        });
+        stage.setOnHiding(windowEvent -> Platform.runLater(() -> {
+            String name = addSubjectController.getName();
+            if(name==null)return;
+            model.addSubject(name);
+            refreshSubjects();
+            pathQueue.clear();
+            list.getItems().clear();
+        }));
     }
     public void toBosnian(ActionEvent actionEvent){
         setLanguage(new Locale("bs","BA"));
@@ -395,6 +349,7 @@ public class MainController {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        assert root != null;
         currentStage.setScene(new Scene(root, 750, 500));
         currentStage.setTitle("Subject Management System");
         currentStage.show();
