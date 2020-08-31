@@ -14,9 +14,9 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.MenuItem;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
-import javafx.stage.WindowEvent;
 import rpr.projekat.zejd.Controllers.MainController;
 import rpr.projekat.zejd.Controllers.RenameController;
 import rpr.projekat.zejd.Models.DirectoryModel;
@@ -32,7 +32,7 @@ import java.util.ResourceBundle;
 
 public class ListViewCell extends ListCell<ListViewCellElement> {
     @FXML
-    private GridPane gridpane;
+    private AnchorPane pane;
     @FXML
     private ImageView icon;
     @FXML
@@ -79,33 +79,20 @@ public class ListViewCell extends ListCell<ListViewCellElement> {
         ContextMenu cm1 = new ContextMenu();
         if(listViewCellElement != null && !listViewCellElement.getName().equals(". . .")) {
             MenuItem mi = new MenuItem(resourceBundle.getString("delete"));
-            mi.setOnAction(new EventHandler<ActionEvent>() {
-                @Override
-                public void handle(ActionEvent actionEvent) {
-                    switch (listViewCellElement.getType()){
-                        case DIRECTORY:
-                            model.deleteDirectory(path, listViewCellElement.getName());
-                            Platform.runLater(new Runnable() {
-                                @Override
-                                public void run() {
-                                    mainController.updateListView();
-                                }
-                            });
-                            break;
-                        case FILE:
-                            model.deleteFile(path, listViewCellElement.getName());
-                            Platform.runLater(new Runnable() {
-                                @Override
-                                public void run() {
-                                    mainController.updateListView();
-                                }
-                            });
-                            break;
-                    }
+            mi.setOnAction(actionEvent -> {
+                switch (listViewCellElement.getType()){
+                    case DIRECTORY:
+                        model.deleteDirectory(path, listViewCellElement.getName());
+                        Platform.runLater(() -> mainController.updateListView());
+                        break;
+                    case FILE:
+                        model.deleteFile(path, listViewCellElement.getName());
+                        Platform.runLater(() -> mainController.updateListView());
+                        break;
                 }
             });
             MenuItem mi2 = new MenuItem(resourceBundle.getString("rename"));
-            mi2.setOnAction(new EventHandler<ActionEvent>() {
+            mi2.setOnAction(new EventHandler<>() {
                 @Override
                 public void handle(ActionEvent actionEvent) {
                     RenameController rc = new RenameController(listViewCellElement.getName());
@@ -119,34 +106,22 @@ public class ListViewCell extends ListCell<ListViewCellElement> {
                     }
                     Stage stage = new Stage();
                     stage.setTitle(resourceBundle.getString("rename"));
-                    stage.setScene(new Scene(root,600,300));
+                    assert root != null;
+                    stage.setScene(new Scene(root, 600, 300));
                     stage.setResizable(false);
                     stage.show();
-                    stage.setOnHiding(new EventHandler<WindowEvent>() {
-                        @Override
-                        public void handle(WindowEvent windowEvent) {
-                            String newName = rc.getName();
-                            if(newName == null)return;
-                            switch (listViewCellElement.getType()){
-                                case FILE:
-                                    model.renameFile(path,listViewCellElement.getName(),newName);
-                                    Platform.runLater(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            mainController.updateListView();
-                                        }
-                                    });
-                                    break;
-                                case DIRECTORY:
-                                    model.renameDirectory(path,listViewCellElement.getName(),newName);
-                                    Platform.runLater(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            mainController.updateListView();
-                                        }
-                                    });
-                                    break;
-                            }
+                    stage.setOnHiding(windowEvent -> {
+                        String newName = rc.getName();
+                        if (newName == null) return;
+                        switch (listViewCellElement.getType()) {
+                            case FILE:
+                                model.renameFile(path, listViewCellElement.getName(), newName);
+                                Platform.runLater(() -> mainController.updateListView());
+                                break;
+                            case DIRECTORY:
+                                model.renameDirectory(path, listViewCellElement.getName(), newName);
+                                Platform.runLater(() -> mainController.updateListView());
+                                break;
                         }
                     });
 
@@ -199,7 +174,7 @@ public class ListViewCell extends ListCell<ListViewCellElement> {
                     this.icon.setImage(new Image(String.valueOf(getClass().getResource("/Images/directory.png"))));
             }
             setText(null);
-            setGraphic(gridpane);
+            setGraphic(pane);
         }
     }
 }
