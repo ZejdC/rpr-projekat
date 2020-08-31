@@ -48,10 +48,19 @@ public class MainController {
     @FXML
     private ListView<ListViewCellElement> list;
     @FXML
+    private Button bosnianBtn;
+    @FXML
+    private Button englishBtn;
+    @FXML
+    private Button germanBtn;
+    @FXML
     public void initialize(){
         mainController = this;
         scrlPn.getStylesheets().add(getClass().getResource("/css/subjectbutton.css").toExternalForm());
         model = DirectoryModel.getInstance();
+        bosnianBtn.setTooltip(new Tooltip("Change the language of the application to Bosnian"));
+        englishBtn.setTooltip(new Tooltip("Change the language of the application to English"));
+        germanBtn.setTooltip(new Tooltip("Change the language of the application to German"));
         updateSubjectsFromDatabase();
         list.setOnMouseClicked(new EventHandler<MouseEvent>() {
             @Override
