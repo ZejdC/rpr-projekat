@@ -37,10 +37,14 @@ import java.util.*;
 import static rpr.projekat.zejd.Utility.OptionButtons.*;
 
 public class MainController {
+    private final int numberOfOptions = OptionButtons.values().length;
+    // THE DEQUE IS USED TO FIND DIRECTORIES IN THE DATABASE MORE EASILY AND RETURN TO PARENT DIRECTORIES
+    private final Deque<String> pathQueue = new LinkedList<>();
     ResourceBundle resourceBundle = ResourceBundle.getBundle("translations");
+    boolean optionButtonsVisible = false;
+    Button lastButtonClicked = null;
     private DirectoryModel model;
     private MainController mainController;
-    private final int numberOfOptions = OptionButtons.values().length;
     @FXML
     private ScrollPane scrlPn;
     @FXML
@@ -53,6 +57,7 @@ public class MainController {
     private Button englishBtn;
     @FXML
     private Button germanBtn;
+
     @FXML
     public void initialize(){
         mainController = this;
@@ -114,11 +119,6 @@ public class MainController {
         list.setFixedCellSize(32);
         list.setCellFactory(factory -> new ListViewCell(model, pathQueue, mainController, resourceBundle));
     }
-    boolean optionButtonsVisible = false;
-    Button lastButtonClicked = null;
-
-    // THE DEQUE IS USED TO FIND DIRECTORIES IN THE DATABASE MORE EASILY AND RETURN TO PARENT DIRECTORIES
-    private final Deque<String> pathQueue = new LinkedList<>();
 
     public void updateListView(){
         list.getItems().clear();

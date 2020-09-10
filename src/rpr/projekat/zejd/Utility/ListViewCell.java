@@ -95,7 +95,7 @@ public class ListViewCell extends ListCell<ListViewCellElement> {
             mi2.setOnAction(new EventHandler<>() {
                 @Override
                 public void handle(ActionEvent actionEvent) {
-                    RenameController rc = new RenameController(listViewCellElement.getName());
+                    RenameController rc = new RenameController(listViewCellElement.getName(), resourceBundle.getString("renameText"));
                     FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/naming_dialog.fxml"));
                     loader.setController(rc);
                     Parent root = null;

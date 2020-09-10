@@ -8,7 +8,8 @@ import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 
 public class RenameController {
-    String placeholder;
+    String oldName;
+    String headerText;
     @FXML
     private TextField subject;
     @FXML
@@ -16,12 +17,13 @@ public class RenameController {
 
     @FXML
     public void initialize(){
-        header.setText("Enter the new name?");
-        subject.setText(placeholder);
+        header.setText(headerText);
+        subject.setText(oldName);
     }
 
-    public RenameController(String oldName){
-        placeholder = oldName;
+    public RenameController(String oldName, String headerText){
+        this.oldName = oldName;
+        this.headerText = headerText;
     }
 
     public void confirm(ActionEvent ae){
