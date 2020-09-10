@@ -40,7 +40,7 @@ public class RenameController {
     }
 
     public String getName(){
-        if(subject.getText().toString().equals(""))return null;
+        if(subject.getText().equals("") || subject.getText().equals(oldName))return null;
         return subject.getText().toString();
     }
 }

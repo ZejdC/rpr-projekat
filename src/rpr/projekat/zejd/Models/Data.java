@@ -3,39 +3,11 @@ package rpr.projekat.zejd.Models;
 import java.sql.Blob;
 
 public class Data extends Location{
-    private Integer id, parent, subject;
     private byte[] content;
 
     public Data(String name, Integer id, Integer parent, Integer subject, byte[] b) {
-        super(name);
-        this.id = id;
-        this.parent = parent;
-        this.subject = subject;
+        super(name, id, parent, subject);
         content = b;
-    }
-
-    public Integer getId() {
-        return id;
-    }
-
-    public void setId(Integer id) {
-        this.id = id;
-    }
-
-    public Integer getParent() {
-        return parent;
-    }
-
-    public void setParent(Integer parent) {
-        this.parent = parent;
-    }
-
-    public Integer getSubject() {
-        return subject;
-    }
-
-    public void setSubject(Integer subject) {
-        this.subject = subject;
     }
 
     public byte[] getContent() {
