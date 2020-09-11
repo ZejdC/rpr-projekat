@@ -171,8 +171,16 @@ public class DirectoryModel {
         return bos != null ? bos.toByteArray() : null;
     }
     //ADDS A NEW SUBJECT AND CREATES THE ROOT DIRECTORY
-    public void addSubject(String name){
+    public void addSubject(String name) throws SameNameException {
         try {
+            for(Subject s: getAllSubjects()){
+                if(s.getName().equals(name)){
+                    Alert a = new Alert(Alert.AlertType.ERROR);
+                    a.setHeaderText(ResourceBundle.getBundle("translations").getString("nameerror"));
+                    a.show();
+                    throw new SameNameException(ResourceBundle.getBundle("translations").getString("nameerror"));
+                }
+            }
             dodajPredmet.setString(1,name);
             dodajPredmet.execute();
             dodajPredmet.clearParameters();

@@ -17,10 +17,7 @@ import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import javafx.util.Callback;
 import rpr.projekat.zejd.Models.*;
-import rpr.projekat.zejd.Utility.DataType;
-import rpr.projekat.zejd.Utility.ListViewCell;
-import rpr.projekat.zejd.Utility.ListViewCellElement;
-import rpr.projekat.zejd.Utility.OptionButtons;
+import rpr.projekat.zejd.Utility.*;
 
 import java.awt.*;
 import java.io.File;
@@ -325,7 +322,12 @@ public class MainController {
         stage.setOnHiding(windowEvent -> Platform.runLater(() -> {
             String name = addSubjectController.getName();
             if(name==null)return;
-            model.addSubject(name);
+            try {
+                model.addSubject(name);
+            } catch (SameNameException e) {
+                e.printStackTrace();
+                return;
+            }
             refreshSubjects();
             pathQueue.clear();
             list.getItems().clear();
